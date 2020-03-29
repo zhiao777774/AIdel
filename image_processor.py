@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Dec 27 18:41:14 2019
-
-@author: 許智豪
-"""
-
 import cv2
 import numpy as np
 

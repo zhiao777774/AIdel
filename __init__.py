@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 22 22:44:42 2020
-
-@author: 許智豪
-"""
-
 import sys, signal
 import cv2
 import numpy as np

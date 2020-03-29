@@ -1,16 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 28 00:05:59 2020
-
-@author: 許智豪
-"""
-
 import darknet.python.darknet as dn
 
 import file_controller as fc
 
 dn_path = "%s/darknet" % fc.ROOT_PATH
-print(dn_path)
 #配置cpu
 dn.set_gpu(0)
 #配置網絡文件及權重文件

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 19 03:18:38 2020
-
-@author: 許智豪
-"""
-
 from threading import Thread
 import time
 import wave, pyaudio
@@ -27,16 +20,17 @@ class SpeechService(Thread):
             print('Recording...')
             sentence = self.voice2text()
             
-            triggerable = len([k for k in self._triggerable_keywords if k in sentence]) > 0
+            keywords = [k for k in self._triggerable_keywords if k in sentence]
+            triggerable = len(keywords) > 0
             if not triggerable: continue 
         
-            sentence = _replace_and_trim(sentence, "AIDEL")
+            for k in keywords: sentence = _replace_and_trim(sentence, k)
             keywords = [k for k in ("尋找", "是否", "導航") if k in sentence]
         
             if ("導航" in keywords) & (len(keywords) >= 2):
                 continue
         
-            keyword = keywords[1 if len(keywords) >= 2 else 0]
+            service_type = keywords[1 if len(keywords) >= 2 else 0]
             words = self.sentence_segment(sentence)
             
     def voice2text(self):

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 12 12:13:56 2020
-
-@author: 許智豪
-"""
-
 class Dodger:
     _weight = {}
     _weight["distance"] = 0.4
