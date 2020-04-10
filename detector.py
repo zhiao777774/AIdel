@@ -2,14 +2,14 @@ import darknet.python.darknet as dn
 
 import file_controller as fc
 
-dn_path = "%s/darknet" % fc.ROOT_PATH
+DN_PATH = "%s/darknet" % fc.ROOT_PATH
 #配置cpu
 dn.set_gpu(0)
 #配置網絡文件及權重文件
-_net = dn.load_net(str.encode("%s/cfg/yolov3-tiny.cfg" % dn_path),
-                      str.encode("%s/weights/yolov3-tiny.weights" % dn_path), 0)
+_net = dn.load_net(str.encode("%s/cfg/yolov3-tiny.cfg" % DN_PATH),
+                      str.encode("%s/weights/yolov3-tiny.weights" % DN_PATH), 0)
 #配置數據集分類文件
-_meta = dn.load_meta(str.encode("%s/cfg/coco.data" % dn_path))
+_meta = dn.load_meta(str.encode("%s/cfg/coco.data" % DN_PATH))
 
 def detect(frame, thresh=.5, hier_thresh=.5, nms=.45):
     """

@@ -86,8 +86,26 @@ class ImageProcessor:
 
         self._frame = frame
 
-    def cvt_to_overlook(self):
-        pass
+    def cvt_to_overlook(self, original_frame):
+        edged = self.frame
+        ratio = edged.shape[0] / 500.0
+
+        cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
+
+        for c in cnts:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)  
+            if len(approx) == 4:
+                screenCnt = approx
+                break
+            
+        warped = perspective.four_point_transform(original_frame, screenCnt.reshape(4, 2) * ratio)
+        warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)  
+        T = threshold_local(warped, 11, offset = 10, method = "gaussian")
+        warped = (warped > T).astype("uint8") * 255
+
+        self._frame = warped
 
     def _draw_lines(self, original_frame, color = [255, 0, 0], thickness = 3):
         lines = self.frame

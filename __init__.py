@@ -23,7 +23,7 @@ def initialize():
         processor.region_of_interest()
         processor.hough_lines()
         processor.optimize_lines(frame)
-        return processor.cvt_to_overlook()
+        return processor.cvt_to_overlook(frame)
     
     _signal_handle()
     _init_services()

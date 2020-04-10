@@ -1,10 +1,24 @@
 from threading import Thread
+from enum import Enum
 import time
 import wave, pyaudio
 import speech_recognition as sr
 import jieba
 
 import file_controller as fc
+
+class ServiceType(Enum):
+    SEARCH = "尋找"
+    WHETHER = "是否"
+    NAVIGATION = "導航"
+
+    @classmethod
+    def execute(cls, service):
+        return {
+            cls.SEARCH: GoogleService(),
+            cls.WHETHER: GoogleService(),
+            cls.NAVIGATION: GoogleService()
+        }.get(service)
 
 class SpeechService(Thread):
     def __init__(self):
@@ -25,13 +39,15 @@ class SpeechService(Thread):
             if not triggerable: continue 
         
             for k in keywords: sentence = _replace_and_trim(sentence, k)
-            keywords = [k for k in ("尋找", "是否", "導航") if k in sentence]
+            keywords = [k for k in ServiceType if k.value in sentence]
         
-            if ("導航" in keywords) & (len(keywords) >= 2):
+            if (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2):
                 continue
         
-            service_type = keywords[1 if len(keywords) >= 2 else 0]
+            service = keywords[1 if len(keywords) >= 2 else 0]
             words = self.sentence_segment(sentence)
+
+            ServiceType.execute(service)
             
     def voice2text(self):
         audio = None
