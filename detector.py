@@ -2,7 +2,7 @@ import darknet.python.darknet as dn
 
 import file_controller as fc
 
-DN_PATH = "%s/darknet" % fc.ROOT_PATH
+DN_PATH = "{}/darknet".format(fc.ROOT_PATH)
 #配置cpu
 dn.set_gpu(0)
 #配置網絡文件及權重文件

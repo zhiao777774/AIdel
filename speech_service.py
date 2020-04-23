@@ -1,11 +1,19 @@
 from threading import Thread
 from enum import Enum
+import abc
 import time
 import wave, pyaudio
 import speech_recognition as sr
 import jieba
+import jieba.analyse
 
+import word_vector_machine as wvm
 import file_controller as fc
+
+class AbstractService:
+    @abc.abstractmethod
+    def execute(self):
+        return NotImplemented
 
 class ServiceType(Enum):
     SEARCH = "尋找"
@@ -13,7 +21,7 @@ class ServiceType(Enum):
     NAVIGATION = "導航"
 
     @classmethod
-    def execute(cls, service):
+    def get_service(cls, service):
         return {
             cls.SEARCH: GoogleService(),
             cls.WHETHER: GoogleService(),
@@ -24,7 +32,7 @@ class SpeechService(Thread):
     def __init__(self):
         Thread.__init__(self)
         
-        dict_path = "%s/dict.txt.big.txt" % fc.ROOT_PATH
+        dict_path = "{}/dict.txt.big.txt".format(fc.ROOT_PATH)
         jieba.set_dictionary(dict_path)
         
         self._triggerable_keywords = fc.read_json("triggerable_keywords.json")
@@ -40,14 +48,23 @@ class SpeechService(Thread):
         
             for k in keywords: sentence = _replace_and_trim(sentence, k)
             keywords = [k for k in ServiceType if k.value in sentence]
-        
-            if (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2):
+
+            if not keywords: 
+                continue 
+            elif (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2): 
                 continue
         
             service = keywords[1 if len(keywords) >= 2 else 0]
             words = self.sentence_segment(sentence)
+            keywords = self.extract_keywords(words)
 
-            ServiceType.execute(service)
+            for tag, weight in keywords:
+                print(tag + " , " + str(weight))
+
+            keywords = self.filter_keywords(keywords)
+            service, place = self.finds(keywords, service)
+
+            ServiceType.get_service(service).execute(place)
             
     def voice2text(self):
         audio = None
@@ -107,6 +124,30 @@ class SpeechService(Thread):
     def sentence_segment(self, sentence):
         return jieba.lcut(sentence)
 
+    def extract_keywords(self, words):
+        keywords = []
+        for word in words:
+            tags = jieba.analyse.extract_tags(word, topK = 5, withWeight = True)
+            if tags: keywords.append(tags[0])
+        return keywords
+
+    def filter_keywords(self, keywords, threshold = 10):
+        return [k for k in keywords if k[1] >= threshold]
+
+    def finds(self, keywords, keyword):
+        if type(keywords[0]) is tuple:
+            keywords = map(lambda k: k[0], keywords)
+
+        index = keywords.index(keyword)
+        place = None
+
+        if len(keywords) == 2:
+            place = keywords[0 if index else 1]
+        else:
+            place = keywords[index + 1]
+
+        return (keyword, place)
+
     def get_device(self):
         pa = pyaudio.PyAudio()
         return pa.get_default_input_device_info()
@@ -117,7 +158,7 @@ def _replace_and_trim(text, old, new = ""):
 
 import googlemaps
 
-class GoogleService:
+class GoogleService(AbstractService):
     def __init__(self):
         gmaps_key = ""
         self._gmaps = googlemaps.Client(key = gmaps_key)
@@ -132,6 +173,9 @@ class GoogleService:
         return radarResults["results"]
     
     def navigate(self):
+        pass
+
+    def execute(self):
         pass
 
 
@@ -155,9 +199,20 @@ if __name__ == "__main__":
         except sr.RequestError as e:
             text = "無法翻譯{0}".format(e)
         print(text)
-        
+
         dict_path = r"D:\Anaconda\Lib\site-packages\jieba\dict.txt.big.txt"
         jieba.set_dictionary(dict_path)
     
         words = jieba.lcut(text)
         print(words)
+
+        keywords = []
+        for word in words:
+            tags = jieba.analyse.extract_tags(word, topK = 5, withWeight = True)
+            if tags: keywords.append(tags[0])
+
+        for tag, weight in keywords:
+            print(tag + " , " + str(weight))
+
+        keywords = [k for k in keywords if k[1] >= 10]
+        print(keywords)
