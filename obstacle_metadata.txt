@@ -1,0 +1,12 @@
+障礙物資料 => Array: 
+[
+障礙物 => Json Object: {
+    name => String: 物體類別,
+    coordinate => Array: 物體座標(經緯度) [
+        lt_x, lt_y => String: 左上座標
+        rt_x, rt_y => String: 右上座標
+        lb_x, lb_y => String: 左下座標
+        rb_x, rb_y => String: 右下座標
+    ],
+    stable => Float: 為固定物體的機率
+}]
