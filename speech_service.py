@@ -7,7 +7,7 @@ import speech_recognition as sr
 import jieba
 import jieba.analyse
 
-import word_vector_machine as wvm
+#import word_vector_machine as wvm
 import file_controller as fc
 
 class AbstractService:
@@ -50,6 +50,7 @@ class SpeechService(Thread):
             keywords = [k for k in ServiceType if k.value in sentence]
 
             if not keywords: 
+                #同義詞搜尋
                 continue 
             elif (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2): 
                 continue
