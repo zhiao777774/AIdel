@@ -23,9 +23,9 @@ class ServiceType(Enum):
     @classmethod
     def get_service(cls, service):
         return {
-            cls.SEARCH: GoogleService(),
-            cls.WHETHER: GoogleService(),
-            cls.NAVIGATION: GoogleService()
+            cls.SEARCH: '', #GoogleService(),
+            cls.WHETHER: '', #GoogleService(),
+            cls.NAVIGATION: '' #GoogleService()
         }.get(service)
 
 class SpeechService(Thread):
@@ -65,7 +65,7 @@ class SpeechService(Thread):
             keywords = self.filter_keywords(keywords)
             service, place = self.finds(keywords, service)
 
-            ServiceType.get_service(service).execute(place)
+            #ServiceType.get_service(service).execute(place)
             
     def voice2text(self):
         audio = None
@@ -156,7 +156,7 @@ class SpeechService(Thread):
 def _replace_and_trim(text, old, new = ''):
     return text.replace(old, new).strip()
 
-
+'''
 import googlemaps
 
 class GoogleService(AbstractService):
@@ -178,7 +178,7 @@ class GoogleService(AbstractService):
 
     def execute(self):
         pass
-
+'''
 
 if __name__ == '__main__':
     while True:
