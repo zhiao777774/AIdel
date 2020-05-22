@@ -4,7 +4,7 @@ import json
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 def read_json(path):
-    path = path if ROOT_PATH in path else (ROOT_PATH + "/" + path)
+    path = path if ROOT_PATH in path else (ROOT_PATH + '/' + path)
     result = None
 
     with open(path , 'r') as reader:
@@ -13,7 +13,7 @@ def read_json(path):
     return result
 
 def write_json(path, data):
-    path = path if ROOT_PATH in path else (ROOT_PATH + "/" + path)
+    path = path if ROOT_PATH in path else (ROOT_PATH + '/' + path)
 
     with open(path , 'w') as writer:
         data = json.dumps(data)

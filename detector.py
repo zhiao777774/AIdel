@@ -2,17 +2,17 @@ import darknet.python.darknet as dn
 
 import file_controller as fc
 
-DN_PATH = "{}/darknet".format(fc.ROOT_PATH)
+DN_PATH = '{}/darknet'.format(fc.ROOT_PATH)
 #配置cpu
 dn.set_gpu(0)
 #配置網絡文件及權重文件
-_net = dn.load_net(str.encode("%s/cfg/yolov3-tiny.cfg" % DN_PATH),
-                      str.encode("%s/weights/yolov3-tiny.weights" % DN_PATH), 0)
+_net = dn.load_net(str.encode('%s/cfg/yolov3-tiny.cfg' % DN_PATH),
+                      str.encode('%s/weights/yolov3-tiny.weights' % DN_PATH), 0)
 #配置數據集分類文件
-_meta = dn.load_meta(str.encode("%s/cfg/coco.data" % DN_PATH))
+_meta = dn.load_meta(str.encode('%s/cfg/coco.data' % DN_PATH))
 
 def detect(frame, thresh=.5, hier_thresh=.5, nms=.45):
-    """
+    '''
     物體檢測函數
     
     Parameters:
@@ -29,7 +29,7 @@ def detect(frame, thresh=.5, hier_thresh=.5, nms=.45):
         -dets : LIST(=>[物體1, 物體2, 物體3, ...])
             物體檢測結果.
             物體 : TUPLE(=>(分類名稱, 分類自信度, (物體中心x, 物體中心y, 物體寬度, 物體高度)))
-    """
+    '''
     dets = dn.detect_np(_net, _meta. frame, thresh, hier_thresh, nms)
     return dets
 
@@ -47,8 +47,8 @@ class BoundingBox:
         w = self.width
         h = self.height
         
-        coords_tuple = namedtuple("coords_tuple", ["lt" , "rt", "lb", "rb"])
-        coord_tuple = namedtuple("coord_tuple", ["x" , "y"])
+        coords_tuple = namedtuple('coords_tuple', ['lt' , 'rt', 'lb', 'rb'])
+        coord_tuple = namedtuple('coord_tuple', ['x' , 'y'])
         
         lt_x, lt_y = (x - w / 2), (y - h / 2)
         rt_x, rt_y = (x + w / 2), (y - h / 2)

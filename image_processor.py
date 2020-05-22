@@ -14,7 +14,7 @@ class ImageProcessor:
     
     def morphologyEx(self, type_ = cv2.MORPH_OPEN):
         if type_ not in (cv2.MORPH_OPEN, cv2.MORPH_CLOSE):
-            raise BaseException("type only can be MORPH_OPEN or MORPH_CLOSE")
+            raise BaseException('type only can be MORPH_OPEN or MORPH_CLOSE')
 
         kernel = np.ones((3, 3), np.uint8)
         self._frame = cv2.morphologyEx(self.frame, type_, kernel)
@@ -102,8 +102,8 @@ class ImageProcessor:
             
         warped = perspective.four_point_transform(original_frame, screenCnt.reshape(4, 2) * ratio)
         warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)  
-        T = threshold_local(warped, 11, offset = 10, method = "gaussian")
-        warped = (warped > T).astype("uint8") * 255
+        T = threshold_local(warped, 11, offset = 10, method = 'gaussian')
+        warped = (warped > T).astype('uint8') * 255
 
         self._frame = warped
 

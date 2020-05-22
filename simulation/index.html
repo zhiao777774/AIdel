@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <script src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
+  <script src='https://d3js.org/d3.v5.min.js'></script>
+  <script src='gridview.js'></script>
+  <script src='info.division.js'></script>
+  <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css' integrity='sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB' crossorigin='anonymous'>
+  <link rel='stylesheet' href='global.css'>
+  <title>AIdel obstacles dodge simulator</title>
+</head>
+<body onload='initGridView(10)'>
+  <header style='width: 100vw; height: 10vh;'>
+    <h1><span>AIdel</span> obstacles dodge simulator</h1>
+  </header>
+  <main style='width: 100vw; height: 90vh;'>
+    <div class='input-group'>
+      <input id='n-random' type='text' class='form-control' placeholder='請輸入生成數量' aria-label='請輸入生成數量' aria-describedby='btnRandom'>
+      <div class='input-group-append'>
+        <button id='btnGenerate' class='btn btn-outline-secondary'>生成障礙物</button>
+        <button id='btnRandomGenerate' class='btn btn-outline-secondary'>生成隨機數量障礙物</button>
+        <button id='btnSimulate' class='btn btn-outline-secondary'>開始模擬</button>
+      </div>
+    </div>
+    <div id='info-div'>
+      <div class='card-header'></div>
+      <div class='card-body scrollbar'></div>
+    </div>
+  </main>
+</body>
+<script>
+  $('#n-random').keyup((e) => {
+    e = e.target;
+
+    if(!/^\d+$/.test(e.value)) {
+      $(e).val(/^\d+/.exec($(e).val()));
+    } else if(e.value <= 0 || e.value > upperLimit) {
+      $(e).val('');
+    }
+    $('#btnGenerate').text(`生成${e.value + (e.value === '' ? '' : '個')}障礙物`);
+    return false;
+  });
+
+  $('#btnGenerate').click((e) => {
+    if(intervalID) return;
+    isEnd = false;
+    initGridView(Number($('#n-random').val()));
+  });
+
+  $('#btnRandomGenerate').click((e) => {
+    if(intervalID) return;
+    isEnd = false;
+    initGridView(Math.floor(Math.random() * (upperLimit - 1)) + 1);
+  });
+
+  let count = 1;
+  $('#btnSimulate').click(function() {
+    if($(this).text() === '開始模擬') {
+      simulate(count++);
+      $(this).text('取消模擬');
+    }else {
+      clearInterval(intervalID);
+      intervalID = undefined;
+      clearTimeout(timeoutID);
+      timeoutID = undefined;
+      initGridView(Number($('#n-random').val()) || 
+        Math.floor(Math.random() * (upperLimit - 1)) + 1);
+      $(this).text('開始模擬');
+    }
+  });
+</script>
+</html>

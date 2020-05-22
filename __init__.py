@@ -30,15 +30,12 @@ def initialize():
     while True:
         frame = capture.read()[1]
         frame = _image_preprocess(frame)
-        #frame = _project_to_2d(frame)
-        #h, w, _ = frame.shape
-        
-        """
+        '''
+        frame = _project_to_2d(frame)
+
         dets = detect(frame)
         bboxes = _generate_bboxes(dets)
-        dop_vals = list(Dodger.calc(bbox) for bbox in bboxes)
-        dop_tree = Dodger.get_DOP(dop_vals)
-        """  
+        '''  
         
 
 from .speech_service import SpeechService

@@ -25,36 +25,36 @@ class MongoDB:
     def select(self, col_name, query = {}, condition = {}):
         #Change SQL grammar to MongoDB grammar
         if type(col_name) is str and \
-            "SELECT" in col_name.upper() and \
+            'SELECT' in col_name.upper() and \
                 not query and not condition:
             
-            strings = col_name.split(" ")
+            strings = col_name.split(' ')
             uppers = [map(lambda e: e.upper(), strings)]
 
-            if strings[1] == "*":
+            if strings[1] == '*':
                 condition = {}
             else:
                 condition = {}
 
-                start = uppers.index("SELECT") + 1
-                end = uppers.index("FROM")
+                start = uppers.index('SELECT') + 1
+                end = uppers.index('FROM')
 
                 for i, q in enumerate(strings[start : end]):
-                    q = q.replace(",", "").strip()
+                    q = q.replace(',', '').strip()
                     strings[start + i] = q
                     condition[q] = 1
 
-            col_name = strings[uppers.index("FROM") + 1]
+            col_name = strings[uppers.index('FROM') + 1]
 
-            if "WHERE" in uppers:
+            if 'WHERE' in uppers:
                 query = {}
 
-                start = col_name.upper().index("WHERE")
+                start = col_name.upper().index('WHERE')
                 end = start + 4
-                temp = "".join(col_name[end + 1 :].split()).split("and")
+                temp = ''.join(col_name[end + 1 :].split()).split('and')
 
                 for q in temp:
-                    key, value = q.split("=", 1) #第二個參數為預防值有包含=的存在，而被切割
+                    key, value = q.split('=', 1) #第二個參數為預防值有包含=的存在，而被切割
                     query[key] = value
 
         col = self.db[col_name]
@@ -72,20 +72,20 @@ class MongoDB:
     def delete(self, col_name, condition):
         #Change SQL grammar to MongoDB grammar
         if type(col_name) is str and \
-            "DELETE" in col_name.upper() and not condition:
+            'DELETE' in col_name.upper() and not condition:
 
-            strings = col_name.split(" ")
+            strings = col_name.split(' ')
             uppers = [map(lambda e: e.upper(), strings)]
-            col_name = strings[uppers.index("FROM") + 1]
+            col_name = strings[uppers.index('FROM') + 1]
             condition = {}
 
-            if "WHERE" in uppers:
-                start = col_name.upper().index("WHERE")
+            if 'WHERE' in uppers:
+                start = col_name.upper().index('WHERE')
                 end = start + 4
-                temp = "".join(col_name[end + 1 :].split()).split("and")
+                temp = ''.join(col_name[end + 1 :].split()).split('and')
 
                 for q in temp:
-                    key, value = q.split("=", 1) #第二個參數為預防值有包含=的存在，而被切割
+                    key, value = q.split('=', 1) #第二個參數為預防值有包含=的存在，而被切割
                     condition[key] = value
 
         col = self.db[col_name]
@@ -96,9 +96,9 @@ class MongoDB:
         return 0
 
     def drop(self, col_name):
-        if type(col_name) is str and "DROP" in col_name.upper():
-            strings = col_name.split(" ")
+        if type(col_name) is str and 'DROP' in col_name.upper():
+            strings = col_name.split(' ')
             uppers = [map(lambda e: e.upper(), strings)]
-            col_name = strings[uppers.index("TABLE") + 1]
+            col_name = strings[uppers.index('TABLE') + 1]
 
         return self.db[col_name].drop()

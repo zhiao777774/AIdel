@@ -16,9 +16,9 @@ class AbstractService:
         return NotImplemented
 
 class ServiceType(Enum):
-    SEARCH = "尋找"
-    WHETHER = "是否"
-    NAVIGATION = "導航"
+    SEARCH = '尋找'
+    WHETHER = '是否'
+    NAVIGATION = '導航'
 
     @classmethod
     def get_service(cls, service):
@@ -32,10 +32,10 @@ class SpeechService(Thread):
     def __init__(self):
         Thread.__init__(self)
         
-        dict_path = "{}/dict.txt.big.txt".format(fc.ROOT_PATH)
+        dict_path = '{}/dict.txt.big.txt'.format(fc.ROOT_PATH)
         jieba.set_dictionary(dict_path)
         
-        self._triggerable_keywords = fc.read_json("triggerable_keywords.json")
+        self._triggerable_keywords = fc.read_json('triggerable_keywords.json')
         
     def run(self):
         while True:
@@ -60,7 +60,7 @@ class SpeechService(Thread):
             keywords = self.extract_keywords(words)
 
             for tag, weight in keywords:
-                print(tag + " , " + str(weight))
+                print(tag + ' , ' + str(weight))
 
             keywords = self.filter_keywords(keywords)
             service, place = self.finds(keywords, service)
@@ -74,21 +74,21 @@ class SpeechService(Thread):
         #self._record_wave()
         device = self.get_device()
         r = sr.Recognizer()
-        with sr.Microphone(device_index = device["index"]) as source: 
+        with sr.Microphone(device_index = device['index']) as source: 
             r.adjust_for_ambient_noise(source)
             audio = r.listen(source)
-        """
+        '''
         r = sr.Recognizer()
         with sr.AudioFile('record.wav') as source:
             r.adjust_for_ambient_noise(source)
             audio = r.listen(source)
-        """
+        '''
         try:
-            text = r.recognize_google(audio, language = "zh-TW")
+            text = r.recognize_google(audio, language = 'zh-TW')
         except sr.UnknownValueError:
-            text = "無法翻譯"
+            text = '無法翻譯'
         except sr.RequestError as e:
-            text = "無法翻譯{0}".format(e)
+            text = '無法翻譯{0}'.format(e)
 
         print(text)
         return text
@@ -153,7 +153,7 @@ class SpeechService(Thread):
         pa = pyaudio.PyAudio()
         return pa.get_default_input_device_info()
     
-def _replace_and_trim(text, old, new = ""):
+def _replace_and_trim(text, old, new = ''):
     return text.replace(old, new).strip()
 
 
@@ -161,7 +161,7 @@ import googlemaps
 
 class GoogleService(AbstractService):
     def __init__(self):
-        gmaps_key = ""
+        gmaps_key = ''
         self._gmaps = googlemaps.Client(key = gmaps_key)
         
     def positioning(self):
@@ -171,7 +171,7 @@ class GoogleService(AbstractService):
         radarResults = self._gmaps.places_radar(location = self.positioning(), 
                                           radius = 200, 
                                           type = type_)
-        return radarResults["results"]
+        return radarResults['results']
     
     def navigate(self):
         pass
@@ -180,28 +180,28 @@ class GoogleService(AbstractService):
         pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     while True:
         audio = None
         text = None
         pa = pyaudio.PyAudio()
         device = pa.get_default_input_device_info()
 
-        print("Recording...")
+        print('Recording...')
         r = sr.Recognizer()
-        with sr.Microphone(device_index = device["index"]) as source: 
+        with sr.Microphone(device_index = device['index']) as source: 
             r.adjust_for_ambient_noise(source)
             audio = r.listen(source)
         
         try:
-            text = r.recognize_google(audio, language = "zh-TW")
+            text = r.recognize_google(audio, language = 'zh-TW')
         except sr.UnknownValueError:
-            text = "無法翻譯"
+            text = '無法翻譯'
         except sr.RequestError as e:
-            text = "無法翻譯{0}".format(e)
+            text = '無法翻譯{0}'.format(e)
         print(text)
 
-        dict_path = r"D:\Anaconda\Lib\site-packages\jieba\dict.txt.big.txt"
+        dict_path = r'D:\Anaconda\Lib\site-packages\jieba\dict.txt.big.txt'
         jieba.set_dictionary(dict_path)
     
         words = jieba.lcut(text)
@@ -213,7 +213,7 @@ if __name__ == "__main__":
             if tags: keywords.append(tags[0])
 
         for tag, weight in keywords:
-            print(tag + " , " + str(weight))
+            print(tag + ' , ' + str(weight))
 
         keywords = [k for k in keywords if k[1] >= 10]
         print(keywords)

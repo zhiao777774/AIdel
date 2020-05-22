@@ -1,7 +1,126 @@
+import queue
+
+
+class Dodger:
+    def __init__(self, maze):
+        self._seq = queue.Queue()
+        self._seq.put('')
+        self._maze = maze
+        self._directions = ''
+
+    def calculate(self):
+        s = ''
+        while not self._end(s):
+            s = self.seq.get()
+            for direction in ('L', 'R', 'U', 'D'):
+                data = s + direction
+                if self._validate(data):
+                    self.seq.put(data)
+
+    def _end(self, directions):
+        maze = self.maze
+        start = 0
+
+        for i, symbol in enumerate(maze[-1]):
+            if symbol == 'O':
+                start = i
+                break
+
+        x = start
+        y = len(maze) - 1
+        for direction in directions:
+            if direction == 'L':
+                x -= 1
+            elif direction == 'R':
+                x += 1
+            elif direction == 'U':
+                y -= 1
+            elif direction == 'D':
+                y += 1
+
+        if maze[y][x] == 'X':
+            print('Found: ' + directions)
+            self._directions = directions
+            return True
+        return False
+
+    def _validate(self, directions):
+        maze = self.maze
+        start = 0
+
+        for i, symbol in enumerate(maze[-1]):
+            if symbol == 'O':
+                start = i
+                break
+
+        x = start
+        y = len(maze) - 1
+        for direction in directions:
+            if direction == 'L':
+                x -= 1
+            elif direction == 'R':
+                x += 1
+            elif direction == 'U':
+                y -= 1
+            elif direction == 'D':
+                y += 1
+
+            if not (0 <= x < len(maze[0]) and 0 <= y < len(maze)):
+                return False
+            elif maze[y][x] == '#':
+                return False
+
+        return True
+
+    def print_maze(self):
+        maze = self.maze
+        start = 0
+
+        for i, symbol in enumerate(maze[-1]):
+            if symbol == 'O':
+                start = i
+                break
+
+        x = start
+        y = len(maze) - 1
+        sequence = set()
+        for direction in self.directions:
+            if direction == 'L':
+                x -= 1
+            elif direction == 'R':
+                x += 1
+            elif direction == 'U':
+                y -= 1
+            elif direction == 'D':
+                y += 1
+            sequence.add((y, x))
+
+        for y, row in enumerate(maze):
+            for x, col in enumerate(row):
+                if (y, x) in sequence:
+                    print('+ ', end='')
+                else:
+                    print(col + ' ', end='')
+            print()
+
+    @property
+    def seq(self):
+        return self._seq
+
+    @property
+    def maze(self):
+        return self._maze
+
+    @property
+    def directions(self):
+        return self._directions
+
+
+'''
 class Dodger:
     _weight = {}
-    _weight["distance"] = 0.4
-    _weight["proportion"] = 1 - _weight["distance"]
+    _weight['distance'] = 0.4
+    _weight['proportion'] = 1 - _weight['distance']
 
     _max = 100
     _min = 0
@@ -10,8 +129,8 @@ class Dodger:
     @classmethod
     def calc(cls, bbox):
         dop = 0
-        dis = cls._weight["distance"]
-        prop = cls._weight["proportion"]
+        dis = cls._weight['distance']
+        prop = cls._weight['proportion']
 
         return dop
 
@@ -92,19 +211,41 @@ class BinaryTreeNode:
     @property
     def data(self):
         return self._data
+'''
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
+    '''
     node5 = BinaryTreeNode(10)
     node4 = BinaryTreeNode(7)
     node3 = BinaryTreeNode(1)
     node2 = BinaryTreeNode(8, node4, node5)
     node1 = BinaryTreeNode(2, node3)
     root = BinaryTreeNode(5, node1, node2)
-    
+
     tree = BinarySearchTree(root)
     print(tree.inorder_traversal()) #print result of inorder traversal 
 
     root_val = 5
     node_vals = [1,2,3,4,6,7,8]
     print(Dodger.get_DOP(node_vals, root_val).inorder_traversal())
+    '''
+
+    import time
+
+    maze = []
+    maze.append([' ', 'X', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+    maze.append([' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' '])
+    maze.append([' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' '])
+    maze.append([' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' '])
+    maze.append([' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' '])
+    maze.append([' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' '])
+    maze.append(['#', ' ', '#', ' ', '#', ' ', '#', '#', '#'])
+    maze.append([' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' '])
+    maze.append(['#', ' ', '#', 'O', ' ', '#', '#', ' ', '#'])
+
+    dodger = Dodger(maze)
+    start = time.time()
+    dodger.calculate()
+    dodger.print_maze()
+    end = time.time()
+    print('花費時間: {}s'.format(round(end - start, 2)))

@@ -1,0 +1,160 @@
+svg {
+    float: left;
+    box-sizing: border-box;
+    border: 1px solid rgb(212, 212, 212);
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+  
+circle {
+    stroke-width: 2px;
+    stroke: rgb(95, 176, 228);
+    fill: rgb(95, 176, 228);
+}
+
+circle.activate {
+    stroke: rgb(33, 106, 151);
+    fill: rgb(33, 106, 151);
+}
+
+circle#user {
+    stroke: rgb(214, 131, 75);
+    fill: rgb(214, 131, 75);
+}
+
+circle#end {
+    stroke: rgb(218, 41, 18);
+    fill: rgb(218, 41, 18);
+}
+  
+line {
+    stroke-width: 1px;
+    stroke: rgb(212, 212, 212);
+    shape-rendering: crispEdges;
+}
+
+line.path {
+    stroke-width: 3px;
+    stroke: rgb(248, 18, 18);
+}
+
+header {
+    display: table;
+    text-align: center;
+    background-color:#FFFFCA;
+    border: 1px solid black;
+}
+
+header h1 {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+header h1 span {
+    color: brown;
+}
+
+div.input-group button {
+    font-weight: bold;
+}
+
+#info-div {
+    width: calc(100vw - 1000px);
+    height: 600px;
+    float: right;
+    border: 1.1px solid rgba(0, 0, 0, .3);
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+#info-div, svg {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+#info-div .card-header span {
+    margin-left: 10px;
+}
+
+#info-div .card-header span:nth-of-type(1) {
+    margin-left: 20px;
+}
+
+#info-div .card-header .color-chart {
+    border-radius: 30px;
+    margin-bottom: -7px;
+}
+
+#info-div .card-header .color-chart  + label {
+    margin-left: 5px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#info-div .card-header button {
+    margin-left: 20px;
+    margin-bottom: 6px;
+    padding: 2px 5px;
+    padding-bottom: 3px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 3px;
+}
+
+#info-div .card-body {
+    padding: 10px;
+}
+
+#info-div .card-body.scrollbar {
+    height: 500px;
+    overflow-y: scroll;
+    margin-bottom: 25px;
+}
+
+#info-div .card-body.scrollbar::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F5;
+}
+
+#info-div .card-body.scrollbar::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+    background-color: #F5F5F5;
+}
+
+#info-div .card-body.scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, .1);
+}
+
+#info-div .card-body div > img {
+    width: 80px;
+    height: 80px;
+    margin-top: -50px;
+    float: right;
+}
+
+#info-div .card-body hr:last-of-type {
+    margin-bottom: 10px;
+}
+
+#info-div .card-body div > h5.success {
+    width: fit-content;
+    background-color: #FFFF6F;
+}
+
+#btnSimulate {
+    background-color: #D0E3F6;
+}
+
+#btnSimulate:hover {
+    color: black;
+}
+
+.color-chart {
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    max-width: 100%;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
