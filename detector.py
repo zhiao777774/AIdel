@@ -1,4 +1,4 @@
-import yolokeras.yolo as yolo
+import yoloKeras.yolo as yolo
 
 import file_controller as fc
 
