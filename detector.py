@@ -1,37 +1,12 @@
-import darknet.python.darknet as dn
+import yolokeras.yolo as yolo
 
 import file_controller as fc
 
-DN_PATH = '{}/darknet'.format(fc.ROOT_PATH)
-#配置cpu
-dn.set_gpu(0)
-#配置網絡文件及權重文件
-_net = dn.load_net(str.encode('%s/cfg/yolov3-tiny.cfg' % DN_PATH),
-                      str.encode('%s/weights/yolov3-tiny.weights' % DN_PATH), 0)
-#配置數據集分類文件
-_meta = dn.load_meta(str.encode('%s/cfg/coco.data' % DN_PATH))
+MODEL_PATH = '{}/yoloKeras/model_data' % fc.ROOT_PATH
+_model = yolo.YOLO(anchors_path = '{}/tiny_yolo_anchors.txt' % MODEL_PATH)
 
-def detect(frame, thresh=.5, hier_thresh=.5, nms=.45):
-    '''
-    物體檢測函數
-    
-    Parameters:
-        -frame : OpenCV Image(=Numpy array)
-            影像數據.
-        -thresh : NUMBER(0-1), optional
-            機率低於此閾值的預測邊界框將被優先過濾. The default is .5.
-        -hier_thresh : NUMBER(0-1), optional
-            針對最大機率邊界框進行類別判斷時的閾值. The default is .5.
-        -nms : NUMBER(0-1), optional
-            非最大值抑制處理時的閾值. The default is .45.
-
-    Returns:
-        -dets : LIST(=>[物體1, 物體2, 物體3, ...])
-            物體檢測結果.
-            物體 : TUPLE(=>(分類名稱, 分類自信度, (物體中心x, 物體中心y, 物體寬度, 物體高度)))
-    '''
-    dets = dn.detect_np(_net, _meta. frame, thresh, hier_thresh, nms)
-    return dets
+def detect(frame):
+    return yolo.detect(_model, frame) 
 
 
 from collections import namedtuple
