@@ -32,7 +32,7 @@ class SpeechService(Thread):
     def __init__(self):
         Thread.__init__(self)
         
-        dict_path = '{}/dict.txt.big.txt'.format(fc.ROOT_PATH)
+        dict_path = f'{fc.ROOT_PATH}/data/dict.txt.big.txt'
         jieba.set_dictionary(dict_path)
         
         self._triggerable_keywords = fc.read_json('triggerable_keywords.json')

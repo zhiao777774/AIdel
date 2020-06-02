@@ -1,21 +1,22 @@
-from timeit import default_timer as timer
 import sys, signal
 import cv2
 
 from .image_processor import ImageProcessor
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger
+from .distance_measurementor import Calibrationor, Measurementor
+
+_CALIBRATION_DISTANCE = 0
+_FOCALLEN = 0.0
 
 def initialize():
     capture = cv2.VideoCapture(0) #0代表從攝像頭開啟
     '''
     frame_size = (640, 360)
+    video_fps = 60.0
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, frame_size[0])
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_size[1])
-    video_FourCC = cv2.VideoWriter_fourcc(*'XVID')
-    video_fps = 100.0
-    video_size = frame_size
-    out = cv2.VideoWriter('', video_FourCC, video_fps, video_size)
+    out = cv2.VideoWriter('', cv2.VideoWriter_fourcc(*'XVID'), video_fps, frame_size)
     '''
     if not capture.isOpened():
         capture.open()
@@ -28,11 +29,6 @@ def initialize():
     def _project_to_2d(frame):
         processor = ImageProcessor(frame)
         return processor.cvt_to_overlook(frame)
-    
-    accum_time = 0
-    curr_fps = 0
-    fps = "FPS: ??"
-    prev_time = timer()
 
     _signal_handle()
     #_init_services()
@@ -40,32 +36,19 @@ def initialize():
         frame = capture.read()[1]
         #frame = _image_preprocess(frame)
         #frame = _project_to_2d(frame)
-        result = detect(frame)
-                
-        curr_time = timer()
-        exec_time = curr_time - prev_time
-        prev_time = curr_time
-        accum_time = accum_time + exec_time
-        curr_fps = curr_fps + 1
-        if accum_time > 1:
-            accum_time = accum_time - 1
-            fps = "FPS: " + str(curr_fps)
-            curr_fps = 0
+        result, dets = detect(frame)
 
-        cv2.putText(result, text = fps, org = (3, 15), fontFace = cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale = 0.50, color = (255, 0, 0), thickness = 2)
-        cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-        cv2.imshow("result", result)
+        if dets: _calc_distance(result, dets)
+
+        cv2.namedWindow('result', cv2.WINDOW_NORMAL)
+        cv2.imshow('result', result)
         #out.write(result)
-        #bboxes = _generate_bboxes(dets)
 
 
 from .speech_service import SpeechService
         
 _DICT_SERVICE = {}
 def _init_services():
-    global _DICT_SERVICE
-
     serivces = [
         SpeechService()
     ]
@@ -77,6 +60,37 @@ def _init_services():
 
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]
+
+def _calc_distance(frame, dets):
+    h = frame.shape[0]
+    w = frame.shape[1]
+    
+    bboxes = _generate_bboxes(dets)
+    bboxes = [bbox for bbox in bboxes 
+        if bbox.coordinates.lb.y >= int(h / 2)]
+    bboxes = [bbox for bbox in bboxes 
+        if bbox.width * bbox.height >= int((h / 4) * (w / 4))]
+
+    for bbox in bboxes:
+        distance = _measure_distance(_CALIBRATION_DISTANCE, _FOCALLEN, bbox)
+        x = int(bbox.center()[0] - bbox.width / 4)
+        y = int(bbox.coordinates.lt.y - 10)
+        cv2.putText(frame, text = f'{round(distance, 2)}cm', org = (x, y), 
+            fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 0.50, color = (0, 0, 255), thickness = 2)
+
+def _measure_distance(calibration_distance, focallen, bbox):
+    rad = bbox.width
+    size = bbox.minEnclosingCircle()
+    print(f"min enclosing circle's radius: {size}")
+
+    measurementor = Measurementor(focallen)
+    distance = measurementor.measure(size, rad)
+    
+    if distance < calibration_distance:
+        distance = calibration_distance + distance
+    print(f'Distance in cm {distance}')
+    
+    return distance
 
 def _signal_handle():
     _handler = lambda signal, frame: sys.exit(0)

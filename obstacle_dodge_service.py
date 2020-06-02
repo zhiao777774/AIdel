@@ -1,6 +1,5 @@
 import queue
 
-
 class Dodger:
     def __init__(self, maze):
         self._seq = queue.Queue()

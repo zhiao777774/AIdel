@@ -2,33 +2,37 @@ import yoloKeras.yolo as yolo
 
 import file_controller as fc
 
-MODEL_PATH = '{}/yoloKeras/model_data' % fc.ROOT_PATH
-_model = yolo.YOLO(anchors_path = '{}/tiny_yolo_anchors.txt' % MODEL_PATH)
+MODEL_PATH = f'{fc.ROOT_PATH}/yoloKeras/model_data'
+_model = yolo.YOLO(anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt')
 
 def detect(frame):
-    return yolo.detect(_model, frame) 
+    image, dets = yolo.detect(_model, frame)
+    return image, dets
 
 
+import math
 from collections import namedtuple
 
 class BoundingBox:
     def __init__(self, det):
         self._clsName, self._confidence = det[0], det[1]
-        self._xCenter, self._yCenter, self._width, self._height = det[2]
+        self._coordinates = self._calc_coordinates(det[2])
         
-    def coordinates(self):
-        x = self.xCenter
-        y = self.yCenter
-        w = self.width
-        h = self.height
+        coords = self.coordinates
+        self._width = coords.rt.x - coords.lt.x
+        self._height = coords.lb.y - coords.lt.y
+        self._xCenter = coords.lt.x + (self.width / 2)
+        self._yCenter = coords.lt.y + (self.height / 2)
         
+    def _calc_coordinates(self, bounds):
+        l, t, r, b = bounds
         coords_tuple = namedtuple('coords_tuple', ['lt' , 'rt', 'lb', 'rb'])
         coord_tuple = namedtuple('coord_tuple', ['x' , 'y'])
         
-        lt_x, lt_y = (x - w / 2), (y - h / 2)
-        rt_x, rt_y = (x + w / 2), (y - h / 2)
-        lb_x, lb_y = (x - w / 2), (y + h / 2)
-        rb_x, rb_y = (x + w / 2), (y + h / 2)
+        lt_x, lt_y = l, t
+        rt_x, rt_y = r, t
+        lb_x, lb_y = l, b
+        rb_x, rb_y = r, b
         
         coords = coords_tuple(coord_tuple(lt_x, lt_y),
                               coord_tuple(rt_x, rt_y),
@@ -36,6 +40,10 @@ class BoundingBox:
                               coord_tuple(rb_x, rb_y))
         return coords
         
+    def minEnclosingCircle(self):
+        sqrt = (self.width ** 2) + (self.height ** 2)
+        return int(math.ceil(sqrt ** 0.5))
+    
     def center(self):
         return self.xCenter, self.yCenter
         
@@ -46,6 +54,10 @@ class BoundingBox:
     @property
     def confidence(self):
         return self._confidence
+    
+    @property
+    def coordinates(self):
+        return self._coordinates
     
     @property
     def xCenter(self):
