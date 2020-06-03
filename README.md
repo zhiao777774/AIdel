@@ -1,1 +1,2 @@
-# AIdel
+# AIdel視障助手
+

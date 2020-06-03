@@ -38,7 +38,7 @@ def initialize():
         #frame = _project_to_2d(frame)
         result, dets = detect(frame)
 
-        if dets: _calc_distance(result, dets)
+        if dets: bboxes = _calc_distance(result, dets)
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
@@ -73,10 +73,14 @@ def _calc_distance(frame, dets):
 
     for bbox in bboxes:
         distance = _measure_distance(_CALIBRATION_DISTANCE, _FOCALLEN, bbox)
+        distance = round(distance, 2)
+        bbox.distance = distance
         x = int(bbox.center()[0] - bbox.width / 4)
         y = int(bbox.coordinates.lt.y - 10)
-        cv2.putText(frame, text = f'{round(distance, 2)}cm', org = (x, y), 
+        cv2.putText(frame, text = f'{distance}cm', org = (x, y), 
             fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 0.50, color = (0, 0, 255), thickness = 2)
+    
+    return bboxes
 
 def _measure_distance(calibration_distance, focallen, bbox):
     rad = bbox.width

@@ -74,3 +74,11 @@ class BoundingBox:
     @property
     def height(self):
         return self._height
+
+    @property
+    def distance(self):
+        return self._distance if self._distance else None
+
+    @distance.setter
+    def distance(self, distance):
+        self._distance = distance
