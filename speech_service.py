@@ -23,9 +23,9 @@ class ServiceType(Enum):
     @classmethod
     def get_service(cls, service):
         return {
-            cls.SEARCH: '', #GoogleService(),
-            cls.WHETHER: '', #GoogleService(),
-            cls.NAVIGATION: '' #GoogleService()
+            cls.SEARCH.value: '', #GoogleService(),
+            cls.WHETHER.value: '', #GoogleService(),
+            cls.NAVIGATION.value: '' #GoogleService()
         }.get(service)
 
 class SpeechService(Thread):
@@ -64,7 +64,7 @@ class SpeechService(Thread):
                 print(tag + ' , ' + str(weight))
 
             keywords = self.filter_keywords(keywords)
-            service, place = self.finds(keywords, service)
+            service, place = self.finds(keywords, service.value)
 
             #ServiceType.get_service(service).execute(place)
             
