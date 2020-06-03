@@ -3,7 +3,7 @@ import cv2
 
 from .image_processor import ImageProcessor
 from .detector import detect, BoundingBox
-from .obstacle_dodge_service import Dodger
+from .obstacle_dodge_service import Dodger, generate_maze
 from .distance_measurementor import Calibrationor, Measurementor
 
 _CALIBRATION_DISTANCE = 0
@@ -37,12 +37,18 @@ def initialize():
         #frame = _image_preprocess(frame)
         #frame = _project_to_2d(frame)
         result, dets = detect(frame)
-
+        bboxes = []
         if dets: bboxes = _calc_distance(result, dets)
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
         #out.write(result)
+
+        if bboxes: 
+            maze = generate_maze(bboxes)
+            dodger = Dodger(maze)
+            dodger.calculate()
+            #dodger.print_maze()
 
 
 from .speech_service import SpeechService

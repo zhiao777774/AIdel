@@ -1,4 +1,18 @@
 import queue
+from enum import Enum
+
+class StrEnum(str, Enum):
+    pass
+
+class MazeSymbol(StrEnum):
+    START = 'O'
+    END = 'X'
+    OBSTACLE = '#'
+    ROAD = ' '
+    PATH = '+ '
+
+    def __str__(self):
+        return self.value
 
 class Dodger:
     def __init__(self, maze):
@@ -21,7 +35,7 @@ class Dodger:
         start = 0
 
         for i, symbol in enumerate(maze[-1]):
-            if symbol == 'O':
+            if symbol == MazeSymbol.START:
                 start = i
                 break
 
@@ -37,7 +51,7 @@ class Dodger:
             elif direction == 'D':
                 y += 1
 
-        if maze[y][x] == 'X':
+        if maze[y][x] == MazeSymbol.END:
             print('Found: ' + directions)
             self._directions = directions
             return True
@@ -48,7 +62,7 @@ class Dodger:
         start = 0
 
         for i, symbol in enumerate(maze[-1]):
-            if symbol == 'O':
+            if symbol == MazeSymbol.START:
                 start = i
                 break
 
@@ -66,7 +80,7 @@ class Dodger:
 
             if not (0 <= x < len(maze[0]) and 0 <= y < len(maze)):
                 return False
-            elif maze[y][x] == '#':
+            elif maze[y][x] == MazeSymbol.OBSTACLE:
                 return False
 
         return True
@@ -76,7 +90,7 @@ class Dodger:
         start = 0
 
         for i, symbol in enumerate(maze[-1]):
-            if symbol == 'O':
+            if symbol == MazeSymbol.START:
                 start = i
                 break
 
@@ -97,9 +111,9 @@ class Dodger:
         for y, row in enumerate(maze):
             for x, col in enumerate(row):
                 if (y, x) in sequence:
-                    print('+ ', end='')
+                    print(MazeSymbol.PATH, end = '')
                 else:
-                    print(col + ' ', end='')
+                    print(col + ' ', end = '')
             print()
 
     @property
@@ -113,6 +127,18 @@ class Dodger:
     @property
     def directions(self):
         return self._directions
+
+def generate_maze(data, width, height, resolution):
+    if width % resolution != 0 or height % resolution != 0:
+        raise ArithmeticError('resolution should be divisible by width and height.')
+
+    maze = []
+    row_len = height / resolution + 1
+    col_len = width / resolution + 1
+    for i in range(row_len):
+        maze.append([])
+        for j in range(col_len):
+            maze[i].append()
 
 
 '''
