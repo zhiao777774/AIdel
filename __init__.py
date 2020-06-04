@@ -7,6 +7,7 @@ from .speech_service import SpeechService
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, generate_maze
 from .distance_measurementor import Calibrationor, Measurementor
+from .environmental_model import write_environmental_model
 
 _CALIBRATION_DISTANCE = 0
 _FOCALLEN = 0.0
@@ -41,8 +42,11 @@ def initialize():
         #frame = _image_preprocess(frame)
         #frame = _project_to_2d(frame)
         result, dets = detect(frame)
+        
         bboxes = []
-        if dets: bboxes = _calc_distance(result, dets)
+        if dets: 
+            bboxes = _calc_distance(result, dets)
+            write_environmental_model('data/environmentalModel.json', bboxes)
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
@@ -51,8 +55,8 @@ def initialize():
         if bboxes: 
             h = int(result.shape[0] / 2)
             w = result.shape[1]
-            
             maze = generate_maze(data = bboxes, height = h, width = w, benchmark = h, resolution = 90)
+
             dodger = Dodger(maze)
             dodger.calculate()
             dodger.print_maze()
@@ -109,7 +113,7 @@ def _measure_distance(calibration_distance, focallen, bbox):
     print(f'Distance in cm {distance}')
     
     return distance
-
+    
 def _signal_handle():
     _handler = lambda signal, frame: sys.exit(0)
 
