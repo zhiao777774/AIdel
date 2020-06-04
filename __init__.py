@@ -1,4 +1,5 @@
 import sys, signal
+import time
 import cv2
 
 from .image_processor import ImageProcessor
@@ -45,10 +46,14 @@ def initialize():
         #out.write(result)
 
         if bboxes: 
-            maze = generate_maze(bboxes)
+            h = int(result.shape[0] / 2)
+            w = result.shape[1]
+            maze = generate_maze(data = bboxes, height = h, width = w, benchmark = h, resolution = 100)
             dodger = Dodger(maze)
             dodger.calculate()
             #dodger.print_maze()
+
+            time.sleep(1) #delay 1s
 
 
 from .speech_service import SpeechService
