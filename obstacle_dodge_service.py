@@ -14,6 +14,9 @@ class MazeSymbol(StrEnum):
 
     def __str__(self):
         return self.value
+            
+    def __repr__(self):
+        return self.value
 
 class Dodger:
     def __init__(self, maze):
@@ -133,10 +136,14 @@ def generate_maze(data, width, height, resolution, benchmark = 0):
     if width % resolution != 0 or height % resolution != 0:
         raise ArithmeticError('resolution should be divisible by width and height.')
 
+    #sorting the data by distance (Ascending)
+    data.sort(key = lambda bbox: bbox.distance)
+
     maze = []
-    row_len = height / resolution + 1
+    row_len = int(height / resolution) + 1
+    row_len += 1 #adding default row (for end)
     row_len += 1 #adding default row (for user)
-    col_len = width / resolution + 1
+    col_len = int(width / resolution) + 1
 
     if col_len % 2 != 0: col_len -= 1
 
@@ -147,22 +154,22 @@ def generate_maze(data, width, height, resolution, benchmark = 0):
             maze[i].append(MazeSymbol.ROAD)
 
     #setting start
-    maze[row_len - 1][(col_len - 1) / 2] = MazeSymbol.START
+    maze[row_len - 1][int((col_len - 1) / 2)] = MazeSymbol.START
 
-    data.sort(key = lambda bbox: bbox.distance) #sorting the data by distance (Ascending)
+    #setting end
+    maze[0][int((col_len - 1) / 2)] = MazeSymbol.END
+
     #setting obstacles
     for bbox in data:
         lb = bbox.coordinates.lb
         rb = bbox.coordinates.rb
 
-        y = math.ceil((lb.y - benchmark) / resolution)
+        y = math.ceil((lb.y - benchmark + resolution) / resolution)
         for x in range(lb.x, rb.x + resolution, resolution):
-            maze[y][math.ceil(x / resolution)] = MazeSymbol.OBSTACLE
+            x = math.ceil(x / resolution)
+            if x >= col_len: x -= 1
 
-    #setting end
-    for row in enumerate(maze):
-        for col in row:
-            
+            maze[y][x] = MazeSymbol.OBSTACLE
 
     return maze
 

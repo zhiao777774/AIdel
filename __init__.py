@@ -3,6 +3,7 @@ import time
 import cv2
 
 from .image_processor import ImageProcessor
+from .speech_service import SpeechService
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, generate_maze
 from .distance_measurementor import Calibrationor, Measurementor
@@ -12,11 +13,12 @@ _FOCALLEN = 0.0
 
 def initialize():
     capture = cv2.VideoCapture(0) #0代表從攝像頭開啟
-    '''
-    frame_size = (640, 360)
-    video_fps = 60.0
+
+    frame_size = (630, 360)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, frame_size[0])
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_size[1])
+    '''
+    video_fps = 60.0
     out = cv2.VideoWriter('', cv2.VideoWriter_fourcc(*'XVID'), video_fps, frame_size)
     '''
     if not capture.isOpened():
@@ -35,6 +37,7 @@ def initialize():
     #_init_services()
     while True:
         frame = capture.read()[1]
+        frame = cv2.resize(frame, frame_size)
         #frame = _image_preprocess(frame)
         #frame = _project_to_2d(frame)
         result, dets = detect(frame)
@@ -48,16 +51,16 @@ def initialize():
         if bboxes: 
             h = int(result.shape[0] / 2)
             w = result.shape[1]
-            maze = generate_maze(data = bboxes, height = h, width = w, benchmark = h, resolution = 100)
+            
+            maze = generate_maze(data = bboxes, height = h, width = w, benchmark = h, resolution = 90)
             dodger = Dodger(maze)
             dodger.calculate()
-            #dodger.print_maze()
+            dodger.print_maze()
+            dirs = dodger.directions
 
             time.sleep(1) #delay 1s
-
-
-from .speech_service import SpeechService
         
+
 _DICT_SERVICE = {}
 def _init_services():
     serivces = [
