@@ -1,5 +1,7 @@
-import yoloKeras.yolo as yolo
+import math
+from collections import namedtuple
 
+import yoloKeras.yolo as yolo
 import file_controller as fc
 
 MODEL_PATH = f'{fc.ROOT_PATH}/yoloKeras/model_data'
@@ -8,10 +10,6 @@ _model = yolo.YOLO(anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt')
 def detect(frame):
     image, dets = yolo.detect(_model, frame)
     return image, dets
-
-
-import math
-from collections import namedtuple
 
 class BoundingBox:
     def __init__(self, det):
