@@ -2,10 +2,7 @@ import queue
 import math
 from enum import Enum
 
-class StrEnum(str, Enum):
-    pass
-
-class MazeSymbol(StrEnum):
+class MazeSymbol(str, Enum):
     START = 'O'
     END = 'X'
     OBSTACLE = '#'

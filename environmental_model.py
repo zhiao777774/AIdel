@@ -2,10 +2,16 @@ import file_controller as fc
 
 class EnvironmentalModel:
     def __init__(self, data):
-        if isinstance(data, str):
+        if type(data) is str:
             data = fc.read_json(data)
+            self._data = data
+        elif type(data) is list:
+            self._data = data
+        else:
+            raise TypeError('data\'s type have to string or list.')
 
-        self._data = data
+    def __str__(self):
+        return self._data
 
     def __repr__(self):
         return self._data
@@ -13,7 +19,7 @@ class EnvironmentalModel:
     def get(self, index):
         return self._data[index]
 
-def write_environmental_model(file_path, bboxes):
+def create_environmental_model(file_path, bboxes):
     _to_str = lambda dic: dict(zip(
             map(lambda k: k, dic.keys()),
             map(lambda v: str(v), dic.values())
