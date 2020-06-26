@@ -5,7 +5,7 @@ import cv2
 from .image_processor import ImageProcessor
 from .speech_service import SpeechService
 from .detector import detect, BoundingBox
-from .obstacle_dodge_service import Dodger, generate_maze
+from .obstacle_dodge_service import Dodger, Maze, generate_maze
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model
 
@@ -57,13 +57,10 @@ def initialize():
             w = result.shape[1]
             maze = generate_maze(data = bboxes, height = h, width = w, 
                 benchmark = h, resolution = 90)
+            maze = Maze(maze)
 
-            dodger = Dodger(maze)
-            dodger.calculate()
-            dodger.print_maze()
-            dirs = dodger.directions
-
-            #time.sleep(1) #delay 1s
+            dodger = Dodger()
+            dirs = dodger.solve(maze)
         
 
 _DICT_SERVICE = {}

@@ -1,21 +1,86 @@
+import time
 import queue
 import math
+import operator
 from enum import Enum
 
+
 class MazeSymbol(str, Enum):
-    START = 'O'
-    END = 'X'
+    START = 'S'
+    END = 'E'
     OBSTACLE = '#'
     ROAD = ' '
     PATH = '+ '
+    BACK_TRACK = '.'
 
     def __str__(self):
         return self.value
-            
+
     def __repr__(self):
         return self.value
 
-class Dodger:
+
+class Maze:
+    def __init__(self, data):
+        if type(data) is str:
+            self.read_file(data)
+        elif type(data) is list:
+            self._data = data
+        else:
+            raise AttributeError(
+                'data type must be file path(str) or maze(list).')
+
+    def __str__(self):
+        return '\n'.join(''.join(r) for r in self.data)
+
+    def read_file(self, path):
+        """Read a maze text file and split out each character. Return
+           a 2-dimensional list where the first dimension is rows and
+           the second is columns."""
+        maze = []
+        with open(path) as f:
+            for line in f.read().splitlines():
+                maze.append(list(line))
+        self._data = maze
+
+    def write_file(self, path):
+        """Write the specified 2-dimensional maze to the specified
+           file, writing one line per row and with columns
+           side-by-side."""
+        with open(path, 'w') as f:
+            for r, line in enumerate(self.data):
+                f.write('%s\n' % ''.join(line))
+
+    def find(self, symbol):
+        """Find the first instance of the specified symbol in the
+           maze, and return the row-index and column-index of the
+           matching cell. Return None if no such cell is found."""
+        for r, line in enumerate(self.data):
+            try:
+                return r, line.index(MazeSymbol.START)
+            except ValueError:
+                pass
+
+    def get(self, where):
+        """Return the symbol stored in the specified cell."""
+        r, c = where
+        return self._data[r][c]
+
+    def set(self, where, symbol):
+        """Store the specified symbol in the specified cell."""
+        r, c = where
+        self._data[r][c] = symbol
+
+    @property
+    def data(self):
+        return self._data
+
+
+class PathNotFoundError(Exception):
+    pass
+
+
+class BfsDodger:
     def __init__(self, maze):
         self._seq = queue.Queue()
         self._seq.put('')
@@ -112,9 +177,9 @@ class Dodger:
         for y, row in enumerate(maze):
             for x, col in enumerate(row):
                 if (y, x) in sequence:
-                    print(MazeSymbol.PATH, end = '')
+                    print(MazeSymbol.PATH, end='')
                 else:
-                    print(col + ' ', end = '')
+                    print(col + ' ', end='')
             print()
 
     @property
@@ -129,34 +194,110 @@ class Dodger:
     def directions(self):
         return self._directions
 
-def generate_maze(data, width, height, resolution, benchmark = 0):
-    if width % resolution != 0 or height % resolution != 0:
-        raise ArithmeticError('resolution should be divisible by width and height.')
 
-    #sorting the data by distance (Ascending)
-    data.sort(key = lambda bbox: bbox.distance)
+class Dodger:
+    def _inner_solve(self, maze, where=None, direction=None):
+        """Finds a path through the specified maze beginning at where (or
+           a cell marked 'S' if where is not provided), and a cell marked
+           'E'. At each cell the four directions are tried in the order
+           UP, RIGHT, LEFT, DOWN. When a cell is left, a marker symbol
+           (one of '^', '>', '<', 'v') is written indicating the new
+           direction, and if backtracking is necessary, a symbol ('.') is
+           also written. The return value is None if no solution was
+           found, and a (row_index, column_index) tuple when a solution
+           is found."""
+
+        start_symbol = MazeSymbol.START
+        end_symbol = MazeSymbol.END
+        vacant_symbol = MazeSymbol.ROAD
+        backtrack_symbol = MazeSymbol.BACK_TRACK
+        directions = (-1, 0), (0, 1), (0, -1), (1, 0)
+        direction_marks = '^', '>', '<', 'v'
+
+        where = where or maze.find(start_symbol)
+
+        if(type(where) is map):
+            where = list(where)
+
+        if not where:
+            # no start cell found
+            return []
+        if maze.get(where) == end_symbol:
+            # standing on the end cell
+            return [end_symbol]
+        if maze.get(where) not in (vacant_symbol, start_symbol):
+            # somebody has been here
+            return []
+
+        for direction in directions:
+            next_cell = list(map(operator.add, where, direction))
+
+            # spray-painting direction
+            marker = direction_marks[directions.index(direction)]
+            if maze.get(where) != start_symbol:
+                maze.set(where, marker)
+
+            sub_solve = self._inner_solve(maze, next_cell, direction)
+            if sub_solve:
+                # found solution in this direction
+                is_first_step = maze.get(where) == start_symbol
+                # make this line simply `[marker]` to include the initial step
+                return ([start_symbol] if is_first_step else []) +\
+                    [marker] + sub_solve
+
+        # no directions worked from here - have to backtrack
+        maze.set(where, backtrack_symbol)
+        return []
+
+    def solve(self, maze):
+        start = time.time()
+        solution = self._inner_solve(maze)
+        if solution:
+            end = time.time()
+            print(f'Spend time: {round(end - start, 2)}s')
+            print(f'Found path through maze {solution}')
+
+            last_start_idx = (len(solution) - 1) - (solution[::-1].index('S'))
+            return ''.join(solution[last_start_idx + 1:-1])
+        else:
+            raise PathNotFoundError('No solution (no start, end, or path)')
+
+
+def generate_maze(data, width, height, resolution, benchmark=0):
+    if width % resolution != 0 or height % resolution != 0:
+        raise ArithmeticError(
+            'resolution should be divisible by width and height.')
+
+    # sorting the data by distance (Ascending)
+    data.sort(key=lambda bbox: bbox.distance)
 
     maze = []
     row_len = int(height / resolution) + 1
-    row_len += 1 #adding default row (for end)
-    row_len += 1 #adding default row (for user)
+    row_len += 1  # adding default row (for end)
+    row_len += 1  # adding default row (for user)
+    row_len += 1  # adding default row (for wall)
     col_len = int(width / resolution) + 1
+    col_len += 1  # adding default column (for wall)
 
-    if col_len % 2 != 0: col_len -= 1
+    if col_len % 2 != 0:
+        col_len -= 1
 
-    #generating empty maze
+    # generating empty maze
     for i in range(row_len):
         maze.append([])
         for j in range(col_len):
-            maze[i].append(MazeSymbol.ROAD)
+            if i == 0 or j == col_len - 1:
+                maze[i].append(MazeSymbol.OBSTACLE)
+            else:
+                maze[i].append(MazeSymbol.ROAD)
 
-    #setting start
+    # setting start
     maze[row_len - 1][int((col_len - 1) / 2)] = MazeSymbol.START
 
-    #setting end
-    maze[0][int((col_len - 1) / 2)] = MazeSymbol.END
+    # setting end
+    maze[1][int((col_len - 1) / 2)] = MazeSymbol.END
 
-    #setting obstacles
+    # setting obstacles
     for bbox in data:
         lb = bbox.coordinates.lb
         rb = bbox.coordinates.rb
@@ -164,142 +305,33 @@ def generate_maze(data, width, height, resolution, benchmark = 0):
         y = math.ceil((lb.y - benchmark + resolution) / resolution)
         for x in range(lb.x, rb.x + resolution, resolution):
             x = math.ceil(x / resolution)
-            if x >= col_len: x -= 1
+            if x >= col_len:
+                x -= 1
 
             maze[y][x] = MazeSymbol.OBSTACLE
 
     return maze
 
-'''
-class Dodger:
-    _weight = {}
-    _weight['distance'] = 0.4
-    _weight['proportion'] = 1 - _weight['distance']
-
-    _max = 100
-    _min = 0
-    _med = (_max - _min) / 2
-
-    @classmethod
-    def calc(cls, bbox):
-        dop = 0
-        dis = cls._weight['distance']
-        prop = cls._weight['proportion']
-
-        return dop
-
-    @classmethod
-    def get_DOP(cls, node_vals = [], root_val = None):
-        root_val = root_val if root_val else cls._med
-
-        root = BinaryTreeNode(root_val)
-        tree = BinarySearchTree(root)
-        
-        for val in node_vals:
-            tree.insert_node(val)
-        
-        return tree
-
-class BinarySearchTree:
-    def __init__(self, root = None):
-        self._root = root
-        self._size = 1 if root != None else 0
-  
-    def is_empty(self):
-        return self.size == 0
-    
-    def insert_node(self, data):
-        self._root = self._insert(self.root, data)
-        return self
-    
-    def _insert(self, node, data):
-        if node is None:
-            return BinaryTreeNode(data)
-        
-        if data < node.data:
-            node.left_child = self._insert(node.left_child, data)
-        else:
-            node.right_child = self._insert(node.right_child, data)
-            
-        return node
-    
-    def search(self, node, i):
-        while node is not None:
-            if i == node.data:
-                return node
-        
-            if i < node.data:
-                node = node.left_child
-            else:
-                node = node.right_child
-        return None
-    
-    def inorder_traversal(self):
-        results = []
-        if self.root is not None:
-            def _inorder(node):
-                if node is not None:
-                    _inorder(node.left_child)
-                    results.append(node.data)
-                    _inorder(node.right_child)
-            _inorder(self.root)
-        return results
-
-    @property
-    def root(self):
-        return self._root
-    
-    @property
-    def size(self):
-        return self._size
-
-class BinaryTreeNode:
-    def __init__(self, data, left_child = None, right_child = None):
-        self._data = data
-        self.left_child = left_child
-        self.right_child = right_child
-        
-    def has_children(self):
-        return (self.left_child is not None) or (self.right_child is not None)
-        
-    @property
-    def data(self):
-        return self._data
-'''
 
 if __name__ == '__main__':
-    '''
-    node5 = BinaryTreeNode(10)
-    node4 = BinaryTreeNode(7)
-    node3 = BinaryTreeNode(1)
-    node2 = BinaryTreeNode(8, node4, node5)
-    node1 = BinaryTreeNode(2, node3)
-    root = BinaryTreeNode(5, node1, node2)
-
-    tree = BinarySearchTree(root)
-    print(tree.inorder_traversal()) #print result of inorder traversal 
-
-    root_val = 5
-    node_vals = [1,2,3,4,6,7,8]
-    print(Dodger.get_DOP(node_vals, root_val).inorder_traversal())
-    '''
-
-    import time
-
     maze = []
-    maze.append([' ', 'X', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+    maze.append([' ', ' ', ' ', ' ', 'E', ' ', ' ', ' ', ' '])
     maze.append([' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' '])
-    maze.append([' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' '])
-    maze.append([' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' '])
-    maze.append([' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' '])
-    maze.append([' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' '])
-    maze.append(['#', ' ', '#', ' ', '#', ' ', '#', '#', '#'])
-    maze.append([' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' '])
-    maze.append(['#', ' ', '#', 'O', ' ', '#', '#', ' ', '#'])
+    maze.append([' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' '])
+    maze.append([' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' '])
+    maze.append(['#', ' ', '#', ' ', 'S', '#', '#', ' ', '#'])
 
-    dodger = Dodger(maze)
+    '''
+    dodger = BfsDodger(maze)
     start = time.time()
     dodger.calculate()
     dodger.print_maze()
     end = time.time()
     print('花費時間: {}s'.format(round(end - start, 2)))
+    '''
+
+    maze = Maze(maze)
+    dodger = Dodger()
+    dirs = dodger.solve(maze)
+    print(maze)
+    print(dirs)
