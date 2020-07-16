@@ -2,7 +2,7 @@ import sys, signal
 import time
 import cv2
 
-from .image_processor import ImageProcessor
+#from .image_processor import ImageProcessor
 from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
@@ -24,7 +24,7 @@ def initialize():
     '''
     if not capture.isOpened():
         capture.open()
-    
+    '''
     def _image_preprocess(frame):
         processor = ImageProcessor(frame)
         processor.basic_preprocess()
@@ -33,7 +33,7 @@ def initialize():
     def _project_to_2d(frame):
         processor = ImageProcessor(frame)
         return processor.cvt_to_overlook(frame)
-
+    '''
     _signal_handle()
     #_init_services()
     dodger = Dodger()
