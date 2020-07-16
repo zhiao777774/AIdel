@@ -3,9 +3,9 @@ import time
 import cv2
 
 from .image_processor import ImageProcessor
-from .speech_service import SpeechService
+from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
-from .obstacle_dodge_service import Dodger, Maze, generate_maze
+from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model
 
@@ -36,6 +36,9 @@ def initialize():
 
     _signal_handle()
     #_init_services()
+    dodger = Dodger()
+    resp = Responser()
+    
     while True:
         frame = capture.read()[1]
         frame = cv2.resize(frame, frame_size)
@@ -59,8 +62,19 @@ def initialize():
                 benchmark = h, resolution = 90)
             maze = Maze(maze)
 
-            dodger = Dodger()
-            dirs = dodger.solve(maze)
+            try: 
+                dirs = dodger.solve(maze)
+            except PathNotFoundError as err:
+                print(err)
+                continue
+            except IndexError:
+                continue
+
+            res_text = resp.decide_response(dirs[0])
+            #resp.tts(res_text)
+            resp.play_audio(res_text)
+
+            time.sleep(3000)
         
 
 _DICT_SERVICE = {}

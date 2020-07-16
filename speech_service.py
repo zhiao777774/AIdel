@@ -2,10 +2,13 @@ import abc
 import os
 import time
 import requests
-import wave, pyaudio
+import wave
+import pyaudio
 import speech_recognition as sr
 import jieba
 import jieba.analyse
+import subprocess
+from playsound import playsound
 from threading import Thread
 from xml.etree import ElementTree
 from enum import Enum
@@ -13,10 +16,12 @@ from enum import Enum
 #import word_vector_machine as wvm
 import file_controller as fc
 
+
 class AbstractService:
     @abc.abstractmethod
     def execute(self):
         return NotImplemented
+
 
 class ServiceType(Enum):
     SEARCH = '尋找'
@@ -26,39 +31,42 @@ class ServiceType(Enum):
     @classmethod
     def get_service(cls, service):
         return {
-            cls.SEARCH.value: '', #GoogleService(),
-            cls.WHETHER.value: '', #GoogleService(),
-            cls.NAVIGATION.value: '' #GoogleService()
+            cls.SEARCH.value: '',  # GoogleService(),
+            cls.WHETHER.value: '',  # GoogleService(),
+            cls.NAVIGATION.value: ''  # GoogleService()
         }.get(service)
+
 
 class SpeechService(Thread):
     def __init__(self):
         Thread.__init__(self)
-        
+
         dict_path = f'{fc.ROOT_PATH}/data/dict.txt.big.txt'
         jieba.set_dictionary(dict_path)
-        
+
         keywords_path = f'{fc.ROOT_PATH}/data/triggerable_keywords.json'
         self._triggerable_keywords = fc.read_json(keywords_path)
-        
+
     def run(self):
         while True:
             print('Recording...')
             sentence = self.voice2text()
-            
+
             keywords = [k for k in self._triggerable_keywords if k in sentence]
             triggerable = len(keywords) > 0
-            if not triggerable: continue 
-        
-            for k in keywords: sentence = _replace_and_trim(sentence, k)
+            if not triggerable:
+                continue
+
+            for k in keywords:
+                sentence = _replace_and_trim(sentence, k)
             keywords = [k for k in ServiceType if k.value in sentence]
 
-            if not keywords: 
-                #同義詞搜尋
-                continue 
-            elif (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2): 
+            if not keywords:
+                # 同義詞搜尋
                 continue
-        
+            elif (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2):
+                continue
+
             service = keywords[1 if len(keywords) >= 2 else 0]
             words = self.sentence_segment(sentence)
             keywords = self.extract_keywords(words)
@@ -69,16 +77,16 @@ class SpeechService(Thread):
             keywords = self.filter_keywords(keywords)
             service, place = self.finds(keywords, service.value)
 
-            #ServiceType.get_service(service).execute(place)
-            
+            # ServiceType.get_service(service).execute(place)
+
     def voice2text(self):
         audio = None
         text = None
-    
-        #self._record_wave()
+
+        # self._record_wave()
         device = self.get_device()
         r = sr.Recognizer()
-        with sr.Microphone(device_index = device['index']) as source: 
+        with sr.Microphone(device_index=device['index']) as source:
             r.adjust_for_ambient_noise(source)
             audio = r.listen(source)
         '''
@@ -88,11 +96,11 @@ class SpeechService(Thread):
             audio = r.listen(source)
         '''
         try:
-            text = r.recognize_google(audio, language = 'zh-TW')
+            text = r.recognize_google(audio, language='zh-TW')
         except sr.UnknownValueError:
             text = '無法翻譯'
         except sr.RequestError as e:
-            text = '無法翻譯{0}'.format(e)
+            text = f'無法翻譯{e}'
 
         print(text)
         return text
@@ -105,15 +113,15 @@ class SpeechService(Thread):
         RECORD_SECONDS = 5
 
         pa = pyaudio.PyAudio()
-        stream = pa.open(format = FORMAT,
-                         channels = CHANNELS,
-                         rate = RATE,
-                         input = True,
-                         frames_per_buffer = CHUNK)
+        stream = pa.open(format=FORMAT,
+                         channels=CHANNELS,
+                         rate=RATE,
+                         input=True,
+                         frames_per_buffer=CHUNK)
         print('Recording...')
         buffer = []
         for _ in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-            audio_data = stream.read(CHUNK, exception_on_overflow = False)
+            audio_data = stream.read(CHUNK, exception_on_overflow=False)
             buffer.append(audio_data)
         print('Record Done')
         stream.stop_stream()
@@ -125,18 +133,19 @@ class SpeechService(Thread):
         wf.setframerate(RATE)
         wf.writeframes(b''.join(buffer))
         wf.close()
-    
+
     def sentence_segment(self, sentence):
         return jieba.lcut(sentence)
 
     def extract_keywords(self, words):
         keywords = []
         for word in words:
-            tags = jieba.analyse.extract_tags(word, topK = 5, withWeight = True)
-            if tags: keywords.append(tags[0])
+            tags = jieba.analyse.extract_tags(word, topK=5, withWeight=True)
+            if tags:
+                keywords.append(tags[0])
         return keywords
 
-    def filter_keywords(self, keywords, threshold = 10):
+    def filter_keywords(self, keywords, threshold=10):
         return [k for k in keywords if k[1] >= threshold]
 
     def finds(self, keywords, keyword):
@@ -156,9 +165,11 @@ class SpeechService(Thread):
     def get_device(self):
         pa = pyaudio.PyAudio()
         return pa.get_default_input_device_info()
-    
-def _replace_and_trim(text, old, new = ''):
+
+
+def _replace_and_trim(text, old, new=''):
     return text.replace(old, new).strip()
+
 
 class TextToSpeech:
     def __init__(self, subscription_key, input_text):
@@ -166,7 +177,7 @@ class TextToSpeech:
         self.tts = input_text
         self.timestr = time.strftime('%Y%m%d-%H%M')
         self.access_token = self._get_token()
-        
+
     def _get_token(self):
         fetch_token_url = 'https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken'
         headers = {
@@ -196,7 +207,8 @@ class TextToSpeech:
 
         response = requests.post(constructed_url, headers=headers, data=body)
         if response.status_code == 200:
-            with open('sample-' + self.timestr + '.wav', 'wb') as audio:
+            # with open('sample-' + self.timestr + '.wav', 'wb') as audio:
+            with open(self.tts + '.wav', 'wb') as audio:
                 audio.write(response.content)
                 print('\nStatus code: ' + str(response.status_code) +
                       '\nYour TTS is ready for playback.\n')
@@ -204,10 +216,23 @@ class TextToSpeech:
             print('\nStatus code: ' + str(response.status_code) +
                   '\nSomething went wrong. Check your subscription key and headers.\n')
 
-def tts(input_text):
-    subscription_key = ''
-    app = TextToSpeech(subscription_key, input_text)
-    app.save_audio()
+
+class Responser:
+    def __init__(self):
+        self._response = fc.read_json(f'{fc.ROOT_PATH}/data/response.json')
+
+    def decide_response(self, direction):
+        res = self._response
+        return res[direction]
+
+    def tts(self, input_text):
+        subscription_key = ''
+        app = TextToSpeech(subscription_key, input_text)
+        app.save_audio()
+
+    def play_audio(self, audio_name):
+        playsound(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
+
 
 '''
 import googlemaps
@@ -234,6 +259,12 @@ class GoogleService(AbstractService):
 '''
 
 if __name__ == '__main__':
+    # playsound('D:\\桌面\\Python\\aidel\\data\\audio\\Right.mp3')
+    p = subprocess.Popen(["C:\\Program Files (x86)\\Windows Media Player\\wmplayer.exe", 
+            "D:\\桌面\\Python\\aidel\\data\\audio\\Right.mp3"])
+    p.kill()
+    
+    '''
     while True:
         audio = None
         text = None
@@ -251,7 +282,7 @@ if __name__ == '__main__':
         except sr.UnknownValueError:
             text = '無法翻譯'
         except sr.RequestError as e:
-            text = '無法翻譯{0}'.format(e)
+            text = f'無法翻譯{e}'
         print(text)
 
         dict_path = r'D:\Anaconda\Lib\site-packages\jieba\dict.txt.big.txt'
@@ -270,3 +301,4 @@ if __name__ == '__main__':
 
         keywords = [k for k in keywords if k[1] >= 10]
         print(keywords)
+    '''
