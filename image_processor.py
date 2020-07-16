@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from imutils import perspective
+from imutils import perspective #imutils在pi上有出錯，記得修正
 from skimage.filters import threshold_local
 
 class ImageProcessor:
