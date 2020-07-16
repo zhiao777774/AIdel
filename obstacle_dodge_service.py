@@ -258,7 +258,7 @@ class Dodger:
             print(f'Found path through maze {solution}')
 
             last_start_idx = (len(solution) - 1) - (solution[::-1].index('S'))
-            return ''.join(solution[last_start_idx + 1:-1])
+            return solution[last_start_idx + 1:-1]
         else:
             raise PathNotFoundError('No solution (no start, end, or path)')
 
@@ -315,10 +315,11 @@ def generate_maze(data, width, height, resolution, benchmark=0):
 
 if __name__ == '__main__':
     maze = []
-    maze.append([' ', ' ', ' ', ' ', 'E', ' ', ' ', ' ', ' '])
-    maze.append([' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' '])
-    maze.append([' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' '])
-    maze.append([' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' '])
+    maze.append(['#', '#', '#', '#', '#', '#', '#', '#', '#'])
+    maze.append([' ', ' ', ' ', ' ', 'E', ' ', ' ', ' ', '#'])
+    maze.append([' ', ' ', '#', '#', ' ', '#', ' ', ' ', '#'])
+    maze.append([' ', '#', ' ', '#', '#', ' ', ' ', '#', '#'])
+    maze.append([' ', ' ', ' ', '#', ' ', ' ', '#', ' ', '#'])
     maze.append(['#', ' ', '#', ' ', 'S', '#', '#', ' ', '#'])
 
     '''
