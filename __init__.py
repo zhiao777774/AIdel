@@ -1,6 +1,9 @@
-import sys, signal
+import sys
+import signal
 import time
 import cv2
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 
 #from .image_processor import ImageProcessor
 from .speech_service import SpeechService, Responser
@@ -9,21 +12,23 @@ from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundErr
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model
 
-_CALIBRATION_DISTANCE = 0
-_FOCALLEN = 0.0
+
+_CALIBRATION_DISTANCE = 35
+_FOCALLEN = 14.536741214057509
+_FRAME_SIZE = (630, 360)
+_FRAME_RATE = 50
 
 def initialize():
-    capture = cv2.VideoCapture(0) #0代表從攝像頭開啟
+    camera = PiCamera()
+    camera.resolution = _FRAME_SIZE
+    camera.framerate = _FRAME_RATE
+    rawCap = PiRGBArray(camera)
 
-    frame_size = (630, 360)
-    capture.set(cv2.CAP_PROP_FRAME_WIDTH, frame_size[0])
-    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_size[1])
+    time.sleep(0.1)
     '''
     video_fps = 60.0
-    out = cv2.VideoWriter('', cv2.VideoWriter_fourcc(*'XVID'), video_fps, frame_size)
+    out = cv2.VideoWriter('', cv2.VideoWriter_fourcc(*'XVID'), video_fps, _FRAME_SIZE)
     '''
-    if not capture.isOpened():
-        capture.open()
     '''
     def _image_preprocess(frame):
         processor = ImageProcessor(frame)
@@ -35,34 +40,31 @@ def initialize():
         return processor.cvt_to_overlook(frame)
     '''
     _signal_handle()
-    #_init_services()
+    # _init_services()
     dodger = Dodger()
     resp = Responser()
-    
-    while True:
-        frame = capture.read()[1]
-        frame = cv2.resize(frame, frame_size)
-        #frame = _image_preprocess(frame)
-        #frame = _project_to_2d(frame)
+
+    for frame in camera.capture_continuous(rawCap, format='bgr', use_video_port=True):
+        frame = frame.array
         result, dets = detect(frame)
-        
+
         bboxes = []
-        if dets: 
+        if dets:
             bboxes = _calc_distance(result, dets)
             create_environmental_model('data/environmentalModel.json', bboxes)
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
-        #out.write(result)
-
-        if bboxes: 
+        # out.write(result)
+        '''
+        if bboxes:
             h = int(result.shape[0] / 2)
             w = result.shape[1]
-            maze = generate_maze(data = bboxes, height = h, width = w, 
+            maze = generate_maze(data = bboxes, height = h, width = w,
                 benchmark = h, resolution = 90)
             maze = Maze(maze)
 
-            try: 
+            try:
                 dirs = dodger.solve(maze)
             except PathNotFoundError as err:
                 print(err)
@@ -72,10 +74,11 @@ def initialize():
 
             res_text = resp.decide_response(dirs[0])
             #resp.tts(res_text)
-            resp.play_audio(res_text)
+            #resp.play_audio(res_text)
+        '''
+        cv2.waitKey(1) & 0xFF
+        rawCap.truncate(0)
 
-            time.sleep(3000)
-        
 
 _DICT_SERVICE = {}
 def _init_services():
@@ -94,12 +97,12 @@ def _generate_bboxes(dets):
 def _calc_distance(frame, dets):
     h = frame.shape[0]
     w = frame.shape[1]
-    
+
     bboxes = _generate_bboxes(dets)
-    bboxes = [bbox for bbox in bboxes 
-        if bbox.coordinates.lb.y >= int(h / 2)]
-    bboxes = [bbox for bbox in bboxes 
-        if bbox.width * bbox.height >= int((h / 4) * (w / 4))]
+    bboxes = [bbox for bbox in bboxes
+              if bbox.coordinates.lb.y >= int(h / 2)]
+    bboxes = [bbox for bbox in bboxes
+              if bbox.width * bbox.height >= int((h / 4) * (w / 4))]
 
     for bbox in bboxes:
         distance = _measure_distance(_CALIBRATION_DISTANCE, _FOCALLEN, bbox)
@@ -107,9 +110,9 @@ def _calc_distance(frame, dets):
         bbox.distance = distance
         x = int(bbox.center()[0] - bbox.width / 4)
         y = int(bbox.coordinates.lt.y - 10)
-        cv2.putText(frame, text = f'{distance}cm', org = (x, y), 
-            fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 0.50, color = (0, 0, 255), thickness = 2)
-    
+        cv2.putText(frame, text=f'{distance}cm', org=(x, y),
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, color=(0, 0, 255), thickness=2)
+
     return bboxes
 
 def _measure_distance(calibration_distance, focallen, bbox):
@@ -119,15 +122,17 @@ def _measure_distance(calibration_distance, focallen, bbox):
 
     measurementor = Measurementor(focallen)
     distance = measurementor.measure(size, rad)
-    
+
     if distance < calibration_distance:
         distance = calibration_distance + distance
     print(f'Distance in cm {distance}')
-    
+
     return distance
-    
+
 def _signal_handle():
-    _handler = lambda signal, frame: sys.exit(0)
+    def _handler(signal, frame):
+        cv2.destroyAllWindows()
+        sys.exit(0)
 
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
