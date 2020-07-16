@@ -104,11 +104,11 @@ if __name__ == '__main__':
         return distance
 
 
-    calibration_distance = 30 #校準時的距離
-    bbox = BoundingBox(('cell phone', 0.55, (159, 110, 291, 357))) #30cm時
-    focallen = _calibrate(calibration_distance, bbox)  #物距30公分下的相機焦距
+    calibration_distance = 35 #校準時的距離
+    bbox = BoundingBox(('bottle', 0.84, (255, 72, 385, 356))) #35cm
+    focallen = _calibrate(calibration_distance, bbox)  #物距35公分下的相機焦距
 
-    focallen = 14.092526690391459 #物距30公分下的相機焦距
+    focallen = 14.536741214057509 #物距35公分下的相機焦距
     #bbox = BoundingBox(('cell phone', 0.55, (159, 110, 291, 357))) #30cm時
     bbox = BoundingBox(('person', 0.65, (87, 49, 555, 344))) #45cm時
     distance = _measure(calibration_distance, focallen, bbox)
