@@ -2,13 +2,31 @@ import pymongo
 
 class MongoDB:
     def __init__(self, location):
+        print('MongoDB client is opening.')
         self._client = pymongo.MongoClient(location)
         self.db = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, trace):
+        self.close()
+
     def connect(self, db_name):
+        print(f'MongoDB is connect to {db_name} database.')
         self.db = self._client[db_name]
 
+    def close(self):
+        print('MongoDB client is closing.')
+        self._client.close()
+
+    def _db_connected(self):
+        if not self.db:
+            raise BrokenPipeError('MongoDB database have been connecting.')
+
     def insert(self, col_name, data):
+        self._db_connected()
+        
         col = self.db[col_name]
         result_id = None
 
@@ -20,9 +38,12 @@ class MongoDB:
         return result_id
 
     def find(self, col_name):
+        self._db_connected()
         return self.db[col_name].find_one()
 
     def select(self, col_name, query = {}, condition = {}):
+        self._db_connected()
+
         #Change SQL grammar to MongoDB grammar
         if type(col_name) is str and \
             'SELECT' in col_name.upper() and \
@@ -65,11 +86,15 @@ class MongoDB:
         return None
 
     def delete_one(self, col_name, condition):
+        self._db_connected()
+
         if type(condition) is dict:
             return self.db[col_name].delete_one(condition)
         return None
 
     def delete(self, col_name, condition):
+        self._db_connected()
+
         #Change SQL grammar to MongoDB grammar
         if type(col_name) is str and \
             'DELETE' in col_name.upper() and not condition:
@@ -96,6 +121,8 @@ class MongoDB:
         return 0
 
     def drop(self, col_name):
+        self._db_connected()
+
         if type(col_name) is str and 'DROP' in col_name.upper():
             strings = col_name.split(' ')
             uppers = [map(lambda e: e.upper(), strings)]
