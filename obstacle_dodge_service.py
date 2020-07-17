@@ -282,7 +282,7 @@ def generate_maze(data, width, height, resolution, benchmark=0):
     if col_len % 2 != 0:
         col_len -= 1
 
-    # generating empty maze
+    # generating empty maze and wall
     for i in range(row_len):
         maze.append([])
         for j in range(col_len):
