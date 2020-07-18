@@ -1,4 +1,6 @@
 import pymongo
+import pickle
+from bson.binary import Binary
 
 class MongoDB:
     def __init__(self, location):
@@ -33,6 +35,24 @@ class MongoDB:
         if type(data) is dict:
             result_id = col.insert_one(data).inserted_id
         elif type(data) is list:
+            result_id = col.insert_many(data).inserted_id
+
+        return result_id
+
+    def save_with_image(self, col_name, data, img_column_name, np_image = None):
+        self._db_connected()
+
+        col = self.db[col_name]
+        result_id = None
+
+        if type(data) is dict:
+            np_image = np_image | data[img_column_name]
+            data[img_column_name] = Binary(pickle.dumps(np_image, protocol=2))
+            result_id = col.insert_one(data).inserted_id
+        elif type(data) is list:
+            for item in data:
+                np_image = item[img_column_name]
+                item[img_column_name] = Binary(pickle.dumps(np_image, protocol=2))
             result_id = col.insert_many(data).inserted_id
 
         return result_id
