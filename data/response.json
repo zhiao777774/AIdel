@@ -1,6 +1,6 @@
 {
     "^": "Upper.mp3",
-    "v": "Down.mp3",
+    "v": "Upper.mp3",
     ">": "Left.mp3",
     "<": "Right.mp3"
 }
