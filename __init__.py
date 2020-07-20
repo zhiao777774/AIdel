@@ -11,6 +11,7 @@ from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model
+from .db_handler import MongoDB, np_cvt_bson
 
 
 _CALIBRATION_DISTANCE = 35
@@ -22,13 +23,11 @@ def initialize():
     camera = PiCamera()
     camera.resolution = _FRAME_SIZE
     camera.framerate = _FRAME_RATE
-    rawCap = PiRGBArray(camera)
+    raw_capture = PiRGBArray(camera)
+    # out = cv2.VideoWriter('', 
+    #     cv2.VideoWriter_fourcc(*'XVID'), _FRAME_RATE, _FRAME_SIZE)
 
     time.sleep(0.1)
-    '''
-    video_fps = 60.0
-    out = cv2.VideoWriter('', cv2.VideoWriter_fourcc(*'XVID'), video_fps, _FRAME_SIZE)
-    '''
     '''
     def _image_preprocess(frame):
         processor = ImageProcessor(frame)
@@ -41,43 +40,43 @@ def initialize():
     '''
     _signal_handle()
     # _init_services()
-    dodger = Dodger()
-    resp = Responser()
+    with MongoDB('120.125.83.10', '8080') as db:
+        dodger = Dodger()
+        resp = Responser()
 
-    for frame in camera.capture_continuous(rawCap, format='bgr', use_video_port=True):
-        frame = frame.array
-        result, dets = detect(frame)
+        for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
+            frame = frame.array
+            result, dets = detect(frame)
 
-        bboxes = []
-        if dets:
-            bboxes = _calc_distance(result, dets)
-            create_environmental_model('data/environmentalModel.json', bboxes)
+            bboxes = []
+            if dets:
+                bboxes = _calc_distance(result, dets)
+                create_environmental_model('data/environmentalModel.json', bboxes)
 
-        cv2.namedWindow('result', cv2.WINDOW_NORMAL)
-        cv2.imshow('result', result)
-        # out.write(result)
-        '''
-        if bboxes:
-            h = int(result.shape[0] / 2)
-            w = result.shape[1]
-            maze = generate_maze(data = bboxes, height = h, width = w,
-                benchmark = h, resolution = 90)
-            maze = Maze(maze)
+            cv2.namedWindow('result', cv2.WINDOW_NORMAL)
+            cv2.imshow('result', result)
+            # out.write(result)
+            '''
+            if bboxes:
+                h = int(result.shape[0] / 2)
+                w = result.shape[1]
+                maze = generate_maze(data = bboxes, height = h, width = w,
+                    benchmark = h, resolution = 90)
+                maze = Maze(maze)
 
-            try:
-                dirs = dodger.solve(maze)
-            except PathNotFoundError as err:
-                print(err)
-                continue
-            except IndexError:
-                continue
+                try:
+                    dirs = dodger.solve(maze)
+                except PathNotFoundError as err:
+                    print(err)
+                    continue
+                except IndexError:
+                    continue
 
-            res_text = resp.decide_response(dirs[0])
-            #resp.tts(res_text)
-            #resp.play_audio(res_text)
-        '''
-        cv2.waitKey(1) & 0xFF
-        rawCap.truncate(0)
+                res_audio_file = resp.decide_response(dirs[0])
+                #resp.play_audio(res_audio_file)
+            '''
+            cv2.waitKey(1) & 0xFF
+            raw_capture.truncate(0)
 
 
 _DICT_SERVICE = {}
