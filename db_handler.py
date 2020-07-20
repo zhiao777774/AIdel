@@ -2,8 +2,9 @@
 import numpy as np
 import cv2
 import socketio
-import pickle
-from bson.binary import Binary
+import base64
+from PIL import Image
+from io import BytesIO
 
 '''
 class MongoDB:
@@ -180,8 +181,14 @@ class MongoDB:
             def _handler(data):
                 callback(data)
 
-def np_cvt_bson(np_image):
-    return Binary(pickle.dumps(np_image, protocol=2), subtype=128)
+def np_cvt_base64img(np_image, _format='JPEG'):
+    buffered = BytesIO()
+    img = Image.fromarray(np_image)
+    img.save(buffered, format=_format)
+
+    buffered.seek(0)
+    base64img_str = base64.b64encode(buffered.getvalue()).decode()
+    return base64img_str
 
 
 if __name__ == '__main__':
@@ -193,6 +200,14 @@ if __name__ == '__main__':
                 'time': '16:00',
                 'data': []
             },
+            {
+                'time': '16:30',
+                'data': []
+            },
+            {
+                'time': '17:00',
+                'data': []
+            }
         ]
     }
 
@@ -201,9 +216,23 @@ if __name__ == '__main__':
             '新北市永和區環河東路一段',
             '新北市永和區光復街30號',
             '新北市永和區光復街2巷',
-            # '新北市永和區光復街2巷2號',
-            # '新北市永和區永和路二段334號'
+            '新北市永和區光復街2巷2號',
+            '新北市永和區永和路二段334號'
         ],
+        [
+            '宜蘭縣礁溪鄉德陽村溫泉路1號',
+            '宜蘭縣礁溪鄉德陽街1號',
+            '宜蘭縣礁溪鄉中山路二段117號',
+            '宜蘭縣礁溪鄉礁溪路五段96號',
+            '宜蘭縣礁溪鄉礁溪路五段82號'
+        ],
+        [
+            '苗栗縣竹南鎮博愛街437巷',
+            '苗栗縣竹南鎮博愛街396號',
+            '苗栗縣竹南鎮博愛街367號',
+            '苗栗縣竹南鎮新生路329號',
+            '苗栗縣竹南鎮南寶街54號'
+        ]
     ]
 
     locations = [
@@ -211,14 +240,28 @@ if __name__ == '__main__':
             (25.0180847,121.5167606),
             (25.0173888,121.5159106),
             (25.0166382,121.5150595),
-            # (25.0160403,121.5165338),
-            # (25.0164153,121.5167504)
+            (25.0160403,121.5165338),
+            (25.0164153,121.5167504)
         ],
+        [
+            (24.8264472,121.7753794),
+            (24.8269452,121.7740852),
+            (24.8259578,121.7738968),
+            (24.8258562,121.7728746),
+            (24.8266045,121.7718516)
+        ],
+        [
+            (24.6884289,120.8652432),
+            (24.6887505,120.8660248),
+            (24.6885609,120.8670637),
+            (24.6880285,120.8677626),
+            (24.6874622,120.8678239)
+        ]
     ]
 
     for i, data in enumerate(insert_data['data']):
         locs = []
-        for j in range(1, len(locations) + 1):
+        for j in range(1, len(locations[0]) + 1):
             locs.append({
                 'latitude' : locations[i][j - 1][0],
                 'longitude' : locations[i][j - 1][1]
@@ -226,11 +269,16 @@ if __name__ == '__main__':
         data['locations'] = locs
 
         inner_data = data['data']
-        for j in range(1, len(descriptions) + 1):
-            img = cv2.imread(f'C:\\Users\\user\\Downloads\\G{i + 1}\\G{i + 1}-{j}.jpg')
+        for j in range(1, len(descriptions[0]) + 1):
+            buffered = BytesIO()
+            img = Image.open(f'C:\\Users\\user\\Downloads\\G{i + 1}\\G{i + 1}-{j}.jpg')
+            img.save(buffered, format='JPEG')
+            buffered.seek(0)
+            base64img_str = base64.b64encode(buffered.getvalue()).decode()
+
             inner_data.append({
                 'id': j,
-                'image': np_cvt_bson(img),
+                'image': base64img_str,
                 'description': descriptions[i][j - 1]
             })
 
@@ -238,5 +286,3 @@ if __name__ == '__main__':
         'collection': 'historicalImage',
         'data': insert_data
     }, lambda data: print('inserted'))
-    
-    print('other code')
