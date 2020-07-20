@@ -7,8 +7,7 @@ import pyaudio
 import speech_recognition as sr
 import jieba
 import jieba.analyse
-import subprocess
-from playsound import playsound
+from pygame import mixer
 from threading import Thread
 from xml.etree import ElementTree
 from enum import Enum
@@ -231,7 +230,10 @@ class Responser:
         app.save_audio()
 
     def play_audio(self, audio_name):
-        playsound(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
+        mixer.init()
+        mixer.music.load(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
+        mixer.music.play()
+        while mixer.music.get_busy(): continue
 
 
 '''
@@ -259,12 +261,6 @@ class GoogleService(AbstractService):
 '''
 
 if __name__ == '__main__':
-    # playsound('D:\\桌面\\Python\\aidel\\data\\audio\\Right.mp3')
-    p = subprocess.Popen(["C:\\Program Files (x86)\\Windows Media Player\\wmplayer.exe", 
-            "D:\\桌面\\Python\\aidel\\data\\audio\\Right.mp3"])
-    p.kill()
-    
-    '''
     while True:
         audio = None
         text = None
@@ -301,4 +297,3 @@ if __name__ == '__main__':
 
         keywords = [k for k in keywords if k[1] >= 10]
         print(keywords)
-    '''
