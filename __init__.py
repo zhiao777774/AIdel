@@ -10,7 +10,7 @@ from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
 from .distance_measurementor import Calibrationor, Measurementor
-from .environmental_model import create_environmental_model
+from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .db_handler import MongoDB, np_cvt_base64img
 from .sensor_module import HCSR04, LSM6DS3, destroy_sensors
 
@@ -56,7 +56,7 @@ def initialize():
                 bboxes = _calc_distance(result, dets)
                 create_environmental_model(
                     file_path = 'data/environmentalModel.json',
-                    height = h, width = w,
+                    height = result.shape[0], width = result.shape[1],
                     resolution = _RESOLUTION, bboxes = bboxes)
 
             cv2.namedWindow('result', cv2.WINDOW_NORMAL)
@@ -202,6 +202,7 @@ def _signal_handle():
     def _handler(signal, frame):
         cv2.destroyAllWindows()
         destroy_sensors()
+        disconnect_environmental_model_socket()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, _handler)
