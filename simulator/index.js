@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => console.log(`socket disconnect id: ${socket.id}`));
 });
 
-server.listen(port, () => console.log('http伺服器已在' + port + '埠口啟動'));
+server.listen(port);
 
 app.get('/', (req, res) => {
     fs.readFile(__dirname + '/index.html', (err, data) => {
