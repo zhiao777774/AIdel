@@ -42,6 +42,7 @@ def initialize():
     '''
     _signal_handle()
     _init_services()
+    _enable_sensors()
     with MongoDB('120.125.83.10', '8080') as db:
         dodger = Dodger()
         resp = Responser()
@@ -53,7 +54,10 @@ def initialize():
             bboxes = []
             if dets:
                 bboxes = _calc_distance(result, dets)
-                create_environmental_model('data/environmentalModel.json', bboxes)
+                create_environmental_model(
+                    file_path = 'data/environmentalModel.json',
+                    height = h, width = w,
+                    resolution = _RESOLUTION, bboxes = bboxes)
 
             cv2.namedWindow('result', cv2.WINDOW_NORMAL)
             cv2.imshow('result', result)
@@ -97,8 +101,8 @@ def _init_services():
 _DICT_SENSORS = {}
 def _enable_sensors():
     sensors = [
-        HCSR04(trigger_pin=25, echo_pin=8),
-        LSM6DS3()
+        HCSR04(trigger_pin=16, echo_pin=18),
+        #LSM6DS3()
     ]
 
     for sensor in sensors:
