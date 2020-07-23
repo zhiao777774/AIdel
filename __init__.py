@@ -11,13 +11,15 @@ from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model
-from .db_handler import MongoDB, np_cvt_bson
+from .db_handler import MongoDB, np_cvt_base64img
+from .sensor_module import HCSR04, LSM6DS3, destroy_sensors
 
 
 _CALIBRATION_DISTANCE = 35
 _FOCALLEN = 14.536741214057509
-_FRAME_SIZE = (630, 360)
+_FRAME_SIZE = (960, 720)
 _FRAME_RATE = 50
+_RESOLUTION = 120
 
 def initialize():
     camera = PiCamera()
@@ -39,7 +41,7 @@ def initialize():
         return processor.cvt_to_overlook(frame)
     '''
     _signal_handle()
-    # _init_services()
+    _init_services()
     with MongoDB('120.125.83.10', '8080') as db:
         dodger = Dodger()
         resp = Responser()
@@ -56,25 +58,27 @@ def initialize():
             cv2.namedWindow('result', cv2.WINDOW_NORMAL)
             cv2.imshow('result', result)
             # out.write(result)
-            '''
+            
             if bboxes:
                 h = int(result.shape[0] / 2)
                 w = result.shape[1]
                 maze = generate_maze(data = bboxes, height = h, width = w,
-                    benchmark = h, resolution = 90)
+                    benchmark = h, resolution = _RESOLUTION)
                 maze = Maze(maze)
 
                 try:
                     dirs = dodger.solve(maze)
-                except PathNotFoundError as err:
+                except (PathNotFoundError, IndexError) as err:
+                    cv2.waitKey(1) & 0xFF
+                    raw_capture.truncate(0) 
                     print(err)
-                    continue
-                except IndexError:
-                    continue
+                    continue              
 
+                print(maze)
+                print(dirs)
                 res_audio_file = resp.decide_response(dirs[0])
-                #resp.play_audio(res_audio_file)
-            '''
+                resp.play_audio(res_audio_file)
+            
             cv2.waitKey(1) & 0xFF
             raw_capture.truncate(0)
 
@@ -89,6 +93,18 @@ def _init_services():
         service.setDaemon(True)
         service.start()
         _DICT_SERVICE[type(service).__name__] = service
+
+_DICT_SENSORS = {}
+def _enable_sensors():
+    sensors = [
+        HCSR04(trigger_pin=25, echo_pin=8),
+        LSM6DS3()
+    ]
+
+    for sensor in sensors:
+        sensor.setDaemon(True)
+        sensor.start()
+        _DICT_SENSORS[type(sensor).__name__] = sensor
 
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]
@@ -127,10 +143,61 @@ def _measure_distance(calibration_distance, focallen, bbox):
     print(f'Distance in cm {distance}')
 
     return distance
+'''
+def _save_image(image, db, is_first = False):
+    t = time.localtime()
 
+    n = 0
+    while t.tm_min > 6 * n: n += 1
+
+    diff_min = 6 * n - t.tm_min
+    diff_sec = 60 - t.tm_sec
+    diff_time = diff_min * 60 + diff_sec
+
+    if is_first or diff_min <= 0: _save(image, db)
+
+    @set_interval(diff_time, 1)
+    def _save(image, db):
+        t = time.localtime()
+        fdate = time.strftime('%Y/%m/%d', t)
+        ftime = f'{t.tm_hour}:{"00" if t.tm_min < 30 else "30"}'
+        lat = 0
+        lng = 0
+        address = ''
+
+        insert_data = {
+            'date': fdate,
+            'data': [{
+                'time': ftime,
+                'data': [{
+                    'id': t.tm_min / 6,
+                    'image': np_cvt_base64img(image),
+                    'description': address
+                }]
+            }],
+            'locations': [{
+                'latitude': lat,
+                'longitude': lng
+            }]
+        }
+
+        def _insert(data):
+            insert_data['data'] += data['data']
+            insert_data['locations'] += data['locations']
+            db.insert({
+                'collection': 'historicalImage',
+                'data': insert_data
+            })
+
+        db.select({
+            'collection': 'historicalImage',
+            'filter': { 'date': fdate }
+        }, _insert)
+'''
 def _signal_handle():
     def _handler(signal, frame):
         cv2.destroyAllWindows()
+        destroy_sensors()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, _handler)
