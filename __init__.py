@@ -101,7 +101,7 @@ def _init_services():
 _DICT_SENSORS = {}
 def _enable_sensors():
     sensors = [
-        HCSR04(trigger_pin=16, echo_pin=18),
+        HCSR04(trigger_pin=23, echo_pin=24),
         #LSM6DS3()
     ]
 
