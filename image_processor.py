@@ -104,7 +104,7 @@ if __name__ == '__main__':
     
     #capture = cv2.VideoCapture(0)
     #frame = capture.read()[1]
-    frame = cv2.imread(r'aidel\testImage\test3.jpg')
+    frame = cv2.imread(r'aidel\data\image\test3.jpg')
     cv2.imshow('original' ,frame)
 
     #frame = _image_preprocess(frame)
