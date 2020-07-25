@@ -48,6 +48,7 @@ header {
 header h1 {
     display: table-cell;
     vertical-align: middle;
+    font-weight: bold;
 }
 
 header h1 span {
