@@ -4,6 +4,7 @@ from threading import Thread
 from hcsr04sensor import sensor as hcsr04
 
 
+GPIO.setmode(GPIO.BCM)
 #超音波模組
 class HCSR04(Thread):
     def __init__(self, trigger_pin, echo_pin):
