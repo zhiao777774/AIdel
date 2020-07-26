@@ -147,11 +147,15 @@ div.input-group button {
     background-color: #D0E3F6;
 }
 
+#btnSimulate:hover {
+    color: black;
+}
+
 #btnSocketToggle {
     background-color: cornsilk;
 }
 
-#btnSimulate:hover {
+#btnSocketToggle:hover {
     color: black;
 }
 
