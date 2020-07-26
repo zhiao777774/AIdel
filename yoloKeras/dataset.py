@@ -3,8 +3,8 @@ import random
 
 trainval_percent = 0.66  # 訓練加驗證集佔全部資料集比例
 train_percent = 0.5  # 訓練集佔訓練加驗證集比例
-xml_file_path = 'D:/桌面/Python/aidel/data/imageSet/annotations/table'  # 標註檔路徑
-txt_save_path = 'D:/桌面/Python/aidel/data/imageSet/main/table'  # 訓練、驗證、測試清單路徑
+xml_file_path = 'D:/桌面/Python/aidel/data/imageSet/annotations/pole'  # 標註檔路徑
+txt_save_path = 'D:/桌面/Python/aidel/data/imageSet/main/pole'  # 訓練、驗證、測試清單路徑
 total_xml = os.listdir(xml_file_path)
 
 num = len(total_xml)

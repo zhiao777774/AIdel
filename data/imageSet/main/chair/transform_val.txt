@@ -1,0 +1,33 @@
+D:/桌面/Python/aidel/data/imageSet/images/chair/12.jpg 179,18,628,431,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/15.jpg 61,589,1224,2227,0 1199,555,2242,2133,0 2177,583,3214,2058,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/16.jpg 8,66,210,284,0 69,114,345,481,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/18.jpg 39,49,347,512,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/22.jpg 228,16,542,495,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/26.jpg 13,106,215,491,0 200,94,429,558,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/28.jpg 1,102,131,498,0 222,50,510,471,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/32.jpg 324,90,1038,1169,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/36.jpg 48,97,461,601,0 250,49,586,471,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/39.jpg 522,13,1424,1521,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/4.jpg 24,31,439,416,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/40.jpg 447,16,1015,1169,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/47.jpg 26,41,552,760,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/5.jpg 11,209,838,1179,0 841,153,1624,1050,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/50.jpg 82,18,361,433,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/52.jpg 143,100,563,659,0 287,58,593,454,0 631,397,728,662,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/56.jpg 22,45,309,411,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/57.jpg 116,65,3078,2377,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/59.jpg 72,6,587,751,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/60.jpg 25,4,439,507,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/63.jpg 262,40,1021,1163,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/65.jpg 94,31,1327,1691,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/67.jpg 9,144,273,526,0 531,177,852,631,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/7.jpg 72,5,701,768,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/71.jpg 162,43,1056,1130,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/76.jpg 60,20,360,420,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/79.jpg 118,124,390,480,0 393,112,636,442,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/8.jpg 69,45,485,559,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/81.jpg 132,21,626,727,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/83.jpg 100,19,633,773,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/88.jpg 237,140,1146,1494,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/89.jpg 167,70,710,846,0
+D:/桌面/Python/aidel/data/imageSet/images/chair/96.jpg 74,2,340,566,0

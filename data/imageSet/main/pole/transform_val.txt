@@ -1,0 +1,33 @@
+D:/桌面/Python/aidel/data/imageSet/images/pole/10.jpg 113,52,203,533,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/11.jpg 158,257,286,826,0 478,382,549,688,0 561,1,647,635,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/12.jpg 243,34,886,1528,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/16.jpg 58,375,111,472,0 157,49,225,550,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/22.jpg
+D:/桌面/Python/aidel/data/imageSet/images/pole/26.jpg 80,27,291,566,0 292,274,382,480,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/29.jpg 1045,279,1960,3821,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/33.jpg 510,28,683,1282,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/34.jpg 44,65,569,1742,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/36.jpg 273,1,611,982,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/39.jpg 322,20,407,428,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/40.jpg 160,69,216,458,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/43.jpg 164,1,348,634,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/45.jpg 272,96,522,864,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/46.jpg 146,139,181,509,0 193,23,276,585,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/56.jpg 149,28,323,672,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/59.jpg 151,15,300,613,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/62.jpg 108,1,209,465,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/63.jpg 464,1,644,1000,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/7.jpg 401,316,613,845,0 767,311,989,860,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/70.jpg 239,95,393,563,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/72.jpg 148,1,338,673,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/77.jpg 337,20,404,358,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/79.jpg 272,1,551,1424,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/8.jpg 148,46,362,1041,0 502,328,635,867,0 638,459,727,791,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/80.jpg 203,732,414,1421,0 514,985,609,1336,0 754,145,1105,1636,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/84.jpg 73,8,178,465,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/87.jpg 205,71,459,994,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/89.jpg 188,1,292,503,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/92.jpg 135,18,237,437,0 321,225,356,478,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/95.jpg 271,1,509,1142,0 691,187,800,1019,0 30,1,132,799,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/97.jpg 825,123,1057,1885,0 1202,841,1325,1658,0 1312,1088,1405,1588,0 1617,1151,1710,1588,0 1572,1233,1665,1576,0
+D:/桌面/Python/aidel/data/imageSet/images/pole/99.jpg 853,189,1623,2379,0
