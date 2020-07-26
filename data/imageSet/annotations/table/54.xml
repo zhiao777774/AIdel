@@ -1,0 +1,26 @@
+<annotation>
+	<folder>桌子原圖</folder>
+	<filename>54.jpg</filename>
+	<path>C:\Users\T430S\OneDrive\桌面\桌子原圖\54.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>4128</width>
+		<height>2322</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>table</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>71</xmin>
+			<ymin>24</ymin>
+			<xmax>3656</xmax>
+			<ymax>2314</ymax>
+		</bndbox>
+	</object>
+</annotation>

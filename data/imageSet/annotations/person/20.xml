@@ -1,0 +1,26 @@
+<annotation>
+	<folder>人</folder>
+	<filename>20.jpg</filename>
+	<path>C:\Users\T430S\OneDrive\桌面\人\20.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>626</width>
+		<height>937</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>person</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1</xmin>
+			<ymin>97</ymin>
+			<xmax>626</xmax>
+			<ymax>937</ymax>
+		</bndbox>
+	</object>
+</annotation>

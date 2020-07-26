@@ -1,0 +1,26 @@
+<annotation>
+	<folder>柱子</folder>
+	<filename>78.jpg</filename>
+	<path>C:\Users\T430S\OneDrive\桌面\訓練資料\柱子\78.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>540</width>
+		<height>960</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>pole</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>99</xmin>
+			<ymin>1</ymin>
+			<xmax>261</xmax>
+			<ymax>629</ymax>
+		</bndbox>
+	</object>
+</annotation>

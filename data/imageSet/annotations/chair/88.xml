@@ -1,0 +1,26 @@
+<annotation>
+	<folder>椅子</folder>
+	<filename>88.jpg</filename>
+	<path>C:\Users\T430S\OneDrive\桌面\椅子\88.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1500</width>
+		<height>1500</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>chair</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>237</xmin>
+			<ymin>140</ymin>
+			<xmax>1146</xmax>
+			<ymax>1494</ymax>
+		</bndbox>
+	</object>
+</annotation>
