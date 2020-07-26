@@ -5,7 +5,10 @@ import yoloKeras.yolo as yolo
 import file_controller as fc
 
 MODEL_PATH = f'{fc.ROOT_PATH}/yoloKeras/model_data'
-_model = yolo.YOLO(anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt')
+_model = yolo.YOLO(
+    model_path = f'{MODEL_PATH}/aidel.weights.h5',
+    anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt',
+    classes_path = f'{MODEL_PATH}/aidel_classes.txt')
 
 def detect(frame):
     image, dets = yolo.detect(_model, frame)
