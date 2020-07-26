@@ -75,41 +75,16 @@ class ImageProcessor:
     def frame(self):
         return self._frame
 
-if __name__ == '__main__':
-    def _track():
-        # provide points from image 1
-        pts_src = np.array([[154, 174], [702, 349], [702, 572],[1, 572], [1, 191]])
-        # corresponding points from image 2 (i.e. (154, 174) matches (212, 80))
-        pts_dst = np.array([[212, 80],[489, 80],[505, 180],[367, 235], [144,153]])
-
-        # calculate matrix H
-        h, status = cv2.findHomography(pts_src, pts_dst)
-
-        # provide a point you wish to map from image 1 to image 2
-        a = np.array([[154, 174]], dtype='float32')
-        a = np.array([a])
-
-        # finally, get the mapping
-        pointsOut = cv2.perspectiveTransform(a, h)
-        print(pointsOut)
-
-    def _image_preprocess(frame):
-        processor = ImageProcessor(frame)
-        processor.basic_preprocess()
-        return processor.frame
-
-    def _project_to_2d(frame):
-        processor = ImageProcessor(frame)
-        return processor.cvt_to_overlook(frame)
-    
-    #capture = cv2.VideoCapture(0)
-    #frame = capture.read()[1]
-    frame = cv2.imread(r'aidel\data\image\test3.jpg')
-    cv2.imshow('original' ,frame)
-
-    #frame = _image_preprocess(frame)
-    frame = _project_to_2d(frame)  
-    cv2.imshow('projection' ,frame)
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+def track():
+    # provide points from image 1
+    pts_src = np.array([[154, 174], [702, 349], [702, 572],[1, 572], [1, 191]])
+    # corresponding points from image 2 (i.e. (154, 174) matches (212, 80))
+    pts_dst = np.array([[212, 80],[489, 80],[505, 180],[367, 235], [144,153]])
+    # calculate matrix H
+    h, status = cv2.findHomography(pts_src, pts_dst)
+    # provide a point you wish to map from image 1 to image 2
+    a = np.array([[154, 174]], dtype='float32')
+    a = np.array([a])
+    # finally, get the mapping
+    pointsOut = cv2.perspectiveTransform(a, h)
+    print(pointsOut)
