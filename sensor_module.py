@@ -16,9 +16,13 @@ class HCSR04(Thread):
 
     def run(self):
         while True:
-            sr04 = hcsr04.Measurement(self.TRIGGER_PIN, self.ECHO_PIN)
-            raw_measurement = sr04.raw_distance()
-            distance = sr04.distance_metric(raw_measurement)
+            try:
+                sr04 = hcsr04.Measurement(self.TRIGGER_PIN, self.ECHO_PIN)
+                raw_measurement = sr04.raw_distance()
+                distance = sr04.distance_metric(raw_measurement)
+            except UnboundLocalError:
+                self._distance = -1
+                continue
 
             print(f'超音波模組偵測到距離為 {distance}cm')
             self._distance = distance
