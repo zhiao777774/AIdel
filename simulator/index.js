@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => console.log(`socket disconnect id: ${socket.id}`));
 });
 
-server.listen(port);
+server.listen(port, () => console.log('Simulator is start!'));
 
 app.get('/', (req, res) => {
     fs.readFile(__dirname + '/index.html', (err, data) => {
