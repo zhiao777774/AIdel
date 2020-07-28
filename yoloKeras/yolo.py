@@ -22,7 +22,7 @@ ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class YOLO(object):
     _defaults = {
-        "model_path": f'{ROOT_PATH}/model_data/yolo.h5',
+        "model_path": f'{ROOT_PATH}/model_data/yolo_weights.h5',
         "anchors_path": f'{ROOT_PATH}/model_data/yolo_anchors.txt',
         "classes_path": f'{ROOT_PATH}/model_data/coco_classes.txt',
         "score" : 0.3,
@@ -636,5 +636,23 @@ def detect(yolo, frame):
     return result, objs
 
 if __name__ == '__main__':
-    yolo = YOLO(anchors_path = 'model_data/tiny_yolo_anchors.txt')
+    '''
+    yolo = YOLO(
+        model_path = 'model_data/tiny_yolo_weights.h5',
+        anchors_path = 'model_data/tiny_yolo_anchors.txt')
     detect_realtime(yolo)
+    '''
+
+    import cv2
+
+    yolo = YOLO(
+        model_path = 'model_data/aidel_pole_weights.h5',
+        anchors_path = 'model_data/tiny_yolo_anchors.txt',
+        classes_path = 'model_data/aidel_classes.txt')
+    frame = Image.open(r'D:\\桌面\\Python\\aidel\\data\\imageSet\\images\\pole\\40.jpg')
+    frame = np.array(frame)
+    result, dets = detect(yolo, frame)
+    cv2.namedWindow('result', cv2.WINDOW_NORMAL)
+    cv2.imshow('result', result)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
