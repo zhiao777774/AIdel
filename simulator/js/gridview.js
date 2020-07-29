@@ -1,4 +1,4 @@
-const width = 1000,
+let width = 1000,
     height = 600,
     resolution = 100,
     r = 13;
@@ -42,8 +42,8 @@ function initGridView(n) {
         return { x: x, y: y };
     });
 
-    d3.select('main').select('svg').remove();
-    const svg = d3.select('main').append('svg')
+    d3.select('#simulate-div').select('svg').remove();
+    const svg = d3.select('#simulate-div').append('svg')
         .attr('id', 'grid')
         .attr('width', width)
         .attr('height', height);
@@ -148,12 +148,17 @@ function initGridView(n) {
     }
 }
 
-function dynamicGenerateGridView(model) {
+/*function dynamicGenerateGridView(model) {
     console.log(model);
-    
-    let { width, height, resolution, obstacles } = model;
-    height += resolution;
-    const user =  { x: width / 2,  y: height };
+
+    let {
+        width: imgWidth,
+        height: imgHeight,
+        resolution: imgResolution,
+        obstacles
+    } = model;
+    height += resolution * 2;
+    const user = { x: width / 2, y: height };
     const style = {
         line: 'stroke-width: 1px; stroke: rgb(212, 212, 212); shape-rendering: crispEdges;',
         circle: {
@@ -164,42 +169,26 @@ function dynamicGenerateGridView(model) {
 
     const points = [];
     obstacles.forEach((obstacle) => {
-        const { coordinate } = obstacle;
-
-        Object.keys(coordinate).forEach((coord) => {
-            let { x, y } = coordinate[coord];
-            x = Number(x);
-            y = Number(y);
-
-            points.push({ x, y });
-            coordinate[coord] = { x, y };
-        });
-
+        const { class: clsName, coordinate } = obstacle;
         const { lt, rt, lb, rb } = coordinate;
 
-        //上邊界
-        for (let i = 1; i <= ((rt.x - lt.x) / resolution); i++) {
-            points.push({ x: lt.x + resolution * i, y: lt.y });
-        }
+        lb.x *= width / imgWidth;
+        lb.y *= height / imgHeight;
+        rb.x *= width / imgWidth;
+        rb.y *= height / imgHeight;
 
-        //下邊界
-        for (let i = 1; i <= ((rb.x - lb.x) / resolution); i++) {
-            points.push({ x: lb.x + resolution * i, y: lb.y });
-        }
+        const xCenter = (lb.x + rb.x) / 2
+        const r = xCenter - lb.x;
 
-        //左邊界
-        for (let i = 1; i <= ((lb.y - lt.y) / resolution); i++) {
-            points.push({ x: lt.x, y: lt.y + resolution * i });
-        }
-
-        //右邊界
-        for (let i = 1; i <= ((rb.y - rt.y) / resolution); i++) {
-            points.push({ x: rt.x, y: rt.y + resolution * i });
-        }
+        points.push({
+            x: xCenter,
+            y: lb.y,
+            r
+        });
     });
 
-    d3.select('main').select('svg').remove();
-    const svg = d3.select('main').append('svg')
+    d3.select('#model-div').select('svg').remove();
+    const svg = d3.select('#model-div').append('svg')
         .attr('id', 'grid')
         .attr('width', width)
         .attr('height', height);
@@ -229,8 +218,8 @@ function dynamicGenerateGridView(model) {
         .enter().append('circle')
         .attr('cx', (d) => d.x)
         .attr('cy', (d) => d.y)
-        .attr('r', r)
-        .attr('style', style.circle.default);;
+        .attr('r', (d) => d.r)
+        .attr('style', style.circle.default);
 
     svg.data([{ x: user.x, y: user.y }])
         .append('circle')
@@ -251,7 +240,7 @@ function dynamicGenerateGridView(model) {
             .attr('y', y <= resolution / 2 ? y + 30 : y)
             .text('(' + x + ' , ' + y + ')');
     }).on('mouseout', () => text.attr('display', 'none'));
-}
+}*/
 
 let intervalID = undefined;
 let timeoutID = undefined;
@@ -263,7 +252,7 @@ function simulate(count) {
             Math.floor(Math.random() * (upperLimit - 1)) + 1);
     }
 
-    const svg = d3.select('main').select('svg'),
+    const svg = d3.select('#simulate-div').select('svg'),
         user = svg.select('#user'),
         end = svg.select('#end'),
         $body = $('#info-div div.card-body');
@@ -356,7 +345,7 @@ class PathPlanner {
         const obstacles = [];
         this.oldCoord = { x: x, y: y }
 
-        d3.select('main').select('svg')
+        d3.select('#simulate-div').select('svg')
             .selectAll('circle').filter(function () {
                 return !this.id && (!this.className.animVal ||
                     this.className.animVal === 'activate');
@@ -463,7 +452,7 @@ class PathPlanner {
     }
 
     draw(newCoord) {
-        const svg = d3.select('main').select('svg'),
+        const svg = d3.select('#simulate-div').select('svg'),
             line = svg.append('line');
         const oldCoord = this.oldCoord;
 
@@ -525,7 +514,7 @@ class Dodger {
         for (let i = bound.lt.y; i <= bound.lb.y; i += resolution) {
             const row = [];
             for (let j = bound.lt.x; j <= bound.rt.x; j += resolution) {
-                const circles = d3.select('main').select('svg')
+                const circles = d3.select('#simulate-div').select('svg')
                     .selectAll('circle').filter(function () {
                         return Number(d3.select(this).attr('cx')) === j &&
                             Number(d3.select(this).attr('cy')) === i;
@@ -624,7 +613,7 @@ class Dodger {
     }
 
     _drawPath(newCoord) {
-        const svg = d3.select('main').select('svg'),
+        const svg = d3.select('#simulate-div').select('svg'),
             line = svg.append('line');
         const oldCoord = this.oldCoord;
 
