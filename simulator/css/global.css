@@ -38,21 +38,38 @@ line.path {
     stroke: rgb(248, 18, 18);
 }
 
-header {
+.title {
     display: table;
     text-align: center;
-    background-color:#FFFFCA;
-    border: 1px solid black;
+    margin-top: -2px;
+    margin-bottom: 0px;
+    margin-left: 10px;
+    margin-right: 40px;
 }
 
-header h1 {
+.title h2 {
+    margin: 0 auto;
     display: table-cell;
     vertical-align: middle;
     font-weight: bold;
 }
 
-header h1 span {
+.title h2 span {
     color: brown;
+}
+
+#navbar {
+    background-color:#FFFFCA;
+    padding-top: 10px;
+}
+
+#navbar a {
+    font-weight: bold;
+    color: black;
+}
+
+#navbar a.active {
+    color: rgb(233, 83, 37);
 }
 
 div.input-group button {
@@ -148,14 +165,6 @@ div.input-group button {
 }
 
 #btnSimulate:hover {
-    color: black;
-}
-
-#btnSocketToggle {
-    background-color: cornsilk;
-}
-
-#btnSocketToggle:hover {
     color: black;
 }
 
