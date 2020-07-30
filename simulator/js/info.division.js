@@ -2,11 +2,11 @@ $(function () {
     $('#info-div div.card-header').append(`
         <h3 style='font-weight: bold; display: inline;'>資訊欄</h3>
         <span>
-            <label class='color-chart' style='background: ${$('circle#user').css('fill')};'></label>
+            <label class='color-chart' style='background: rgb(214, 131, 75);'></label>
             <label>視障者</label>
         </span>
         <span>
-            <label class='color-chart' style='background: ${$('circle#end').css('fill')};'></label>
+            <label class='color-chart' style='background: rgb(218, 41, 18);'></label>
             <label>終點</label>
         </span>
         <span>
