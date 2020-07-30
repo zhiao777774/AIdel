@@ -5,7 +5,7 @@ import cv2
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
-import file_controller as fc
+from .file_controller import ROOT_PATH
 #from .image_processor import ImageProcessor
 from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
@@ -56,7 +56,7 @@ def initialize():
             if dets:
                 bboxes = _calc_distance(result, dets)
                 create_environmental_model(
-                    file_path = f'{fc.ROOT_PATH}/data/environmentalModel.json',
+                    file_path = f'{ROOT_PATH}/data/environmentalModel.json',
                     height = result.shape[0], width = result.shape[1],
                     resolution = _RESOLUTION, bboxes = bboxes)
 
