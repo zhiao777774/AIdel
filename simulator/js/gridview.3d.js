@@ -18,11 +18,7 @@ const layout = {
             range: [0, 20]
         },
         camera: {
-            eye: {
-                x: 1,
-                y: 2,
-                z: 0
-            }
+            eye: { x: 1, y: 2, z: 0 }
         }
     }
 };
