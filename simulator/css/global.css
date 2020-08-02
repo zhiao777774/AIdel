@@ -75,9 +75,9 @@
 }
 
 #info-div,
+#info-div+svg,
 #model-result-div,
-#model-3d,
-#info-div+svg {
+#model-3d {
     position: relative;
     z-index: 1;
     overflow: hidden;
