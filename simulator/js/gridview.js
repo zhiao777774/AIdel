@@ -160,9 +160,7 @@ function simulate(count) {
 
     const svg = d3.select('#simulate-div').select('svg'),
         user = svg.select('#user'),
-        end = svg.select('#end'),
-        $body = $('#info-div div.card-body');
-    let step = 1, time = 0;
+        end = svg.select('#end');
 
     $('#info-div div.card-body').append(`
         <div id='${count}'>
@@ -181,47 +179,8 @@ function simulate(count) {
         scrollTop: $(`div#${count}`).offset().top
     }, 800);
 
-
     const dodger = new Dodger(user, end, width, height, resolution, count);
     dodger.start();
-
-    /*
-        const planner = new PathPlanner(user, end);
-        _calculate();
-        intervalID = setInterval(_calculate, 1000);
-    
-        function _calculate() {
-            $body.find(`div#${count}`)
-                .children('.step')
-                .text(`共走了${step++}步`);
-            $body.find(`div#${count}`)
-                .children('.time')
-                .text(`共花費${time++}秒`);
-    
-            const { x, y } = planner.calculate();
-    
-            //更換位置
-            user.attr('cx', x).attr('cy', y);
-            //判斷是否抵達終點
-            isEnd = user.attr('cx') === end.attr('cx') &&
-                user.attr('cy') === end.attr('cy');
-            //繪製行走路徑
-            planner.draw({ x: x, y: y });
-            //抵達終點
-            if (isEnd) {
-                clearInterval(intervalID);
-                intervalID = undefined;
-    
-                $body.find(`div#${count}`)
-                    .append('<span style="color: crimson; font-weight: bold;">抵達終點!</span>')
-                    .append(`<img id='img${count}'>`)
-                    .find('h5').addClass('success');
-                svgSaveAsImg(count);
-                $('#btnSimulate').text('開始模擬');
-                setTimeout(() => alert('成功抵達終點!'), 200);
-            }
-        }
-    */
 }
 
 function svgSaveAsImg(id) {
@@ -233,151 +192,7 @@ function svgSaveAsImg(id) {
         .select(`#img${id}`)
         .attr('src', `data:image/svg+xml;base64,${btoa(svg)}`);
 }
-/*
-class PathPlanner {
-    constructor(user, end) {
-        this.user = user;
-        this.end = end;
 
-        this.prioirty = undefined;
-        this.restriction = {};
-        this.restriction.top = this.restriction.down =
-            this.restriction.left = this.restriction.right = false;
-    }
-
-    calculate() {
-        let x = Number(this.user.attr('cx')),
-            y = Number(this.user.attr('cy'));
-        const obstacles = [];
-        this.oldCoord = { x: x, y: y }
-
-        d3.select('#simulate-div').select('svg')
-            .selectAll('circle').filter(function () {
-                return !this.id && (!this.className.animVal ||
-                    this.className.animVal === 'activate');
-            }).each(({ x, y }) => {
-                obstacles.push({ x: Math.round(x), y: Math.round(y) });
-            });
-
-        const hasObstacles = (func) => obstacles.filter(func).length > 0;
-        const hasObstacle = {
-            above: (x, y) => hasObstacles((p) => p.x === x && p.y === y - resolution),
-            below: (x, y) => hasObstacles((p) => p.x === x && p.y === y + resolution),
-            left: (x, y) => hasObstacles((p) => p.y === y && p.x === x - resolution),
-            right: (x, y) => hasObstacles((p) => p.y === y && p.x === x + resolution)
-        };
-
-        if (this.priority) {
-            console.log(`優先往${this.priority}走`);
-            const coord = this.priorPath(x, y);
-            x = coord.x;
-            y = coord.y;
-        } else {
-            if (y <= 0 || hasObstacle.above(x, y)) { //如果y座標位於上邊界 或 前方有障礙物
-                if (hasObstacle.left(x, y)) { //如果左方有障礙物
-                    if (hasObstacle.right(x, y)) { //如果右方有障礙物
-                        y += resolution; //往下走
-                        this.restriction.top = true; //標記為下次不能往上走
-                    } else { //右方沒有障礙物
-                        if (hasObstacle.below(x, y)) { //如果下方有障礙物
-                            x += resolution; //往右走
-                            this.restriction.left = true; //標記為下次不能往左走
-                        } else { //下方沒有障礙物
-                            if (y >= height) { //如果y座標位於下邊界
-                                x += resolution; //往右走
-                                this.restriction.left = true; //標記為下次不能往左走
-                            } else {
-                                y += resolution; //往下走
-                                this.restriction.top = true; //標記為下次不能往上走
-                            }
-                        }
-                    }
-                } else { //左方沒有障礙物
-                    if (this.restriction.left) { //不能往左走
-                        if (hasObstacle.below(x, y)) { //如果下方有障礙物
-                            x += resolution; //往右走
-                            this.restriction.left = true; //標記為下次不能往左走
-                        } else {
-                            if (y >= height) { //如果y座標位於下邊界
-                                x += resolution; //往右走
-                                this.restriction.left = true; //標記為下次不能往左走
-                            } else {
-                                y += resolution; //往下走
-                                this.restriction.top = true; //標記為下次不能往上走
-                                this.restriction.left = false;
-                            }
-                        }
-                    } else {
-                        x -= resolution; //往左走
-                    }
-                }
-            } else { //y座標沒有位於上邊界 且 前方也沒有障礙物
-                if (this.restriction.top) {  //不能往上走
-                    if (hasObstacle.left(x, y)) { //如果左方有障礙物
-                        y += resolution; //往下走
-                    } else {
-                        x -= resolution; //往左走
-                    }
-                    this.restriction.top = false;
-                    this.restriction.left = false;
-
-                    if (hasObstacle.left(x, y)) { //如果左方有障礙物
-                        this.priority = 'down'; //下次優先往下走
-                        this.restriction.top = true;
-                    } else {
-                        this.priority = 'left'; //下次優先往左走
-                    }
-                } else { //能往上走
-                    y -= resolution; //往上走
-                    this.restriction.top = false;
-                }
-            }
-        }
-
-        return { x: x, y: y };
-    }
-
-    priorPath(x, y) {
-        switch (this.priority) {
-            case 'top':
-                y -= resolution; //往前走
-                break;
-            case 'down':
-                y += resolution; //往下走
-                break;
-            case 'left':
-                x -= resolution; //往左走
-                break;
-            case 'right':
-                x += resolution; //往右走
-                break;
-        }
-
-        this.priority = undefined;
-        return { x: x, y: y };
-    }
-
-    draw(newCoord) {
-        const svg = d3.select('#simulate-div').select('svg'),
-            line = svg.append('line');
-        const oldCoord = this.oldCoord;
-
-        if (oldCoord.x === newCoord.x && oldCoord.y !== newCoord.y) {
-            line.attr('class', 'vertical path');
-        } else {
-            line.attr('class', 'horizontal path');
-        }
-
-        line.attr('x2', oldCoord.x)
-            .attr('y2', oldCoord.y)
-            .attr('x1', newCoord.x)
-            .attr('y1', newCoord.y)
-            .attr('style', `stroke-width: ${(oldCoord.x !== newCoord.x && newCoord.y === oldCoord.y &&
-                newCoord.y === Number(svg.style('height').substring(0, 3))) ? 10 : 3}px; ` +
-                'stroke: rgb(248, 18, 18); shape-rendering: crispEdges;');
-    }
-}
-*/
 class Dodger {
     constructor(user, end, width, height, resolution, count) {
         this.user = user;
