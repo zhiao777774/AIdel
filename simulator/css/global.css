@@ -74,6 +74,17 @@
     border-bottom-left-radius: 15px;
 }
 
+#model-result-div .card-body div>img {
+    width: 80px;
+    height: 80px;
+    margin-top: -50px;
+    float: right;
+}
+
+#model-result-div .card-body hr:last-of-type {
+    margin-bottom: 10px;
+}
+
 #info-div,
 #info-div+svg,
 #model-result-div,
