@@ -193,11 +193,5 @@ class MPU6050(Thread):
         }
 
 
-#六自由度感測模組
-class LSM6DS3(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-
-
 def destroy_sensors():
     GPIO.cleanup()

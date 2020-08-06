@@ -13,7 +13,7 @@ from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundErr
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .db_handler import MongoDB, np_cvt_base64img
-from .sensor_module import HCSR04, GPS, MPU6050, LSM6DS3, destroy_sensors
+from .sensor_module import HCSR04, GPS, MPU6050, destroy_sensors
 
 
 _CALIBRATION_DISTANCE = 35
@@ -104,8 +104,7 @@ def _enable_sensors():
     sensors = [
         HCSR04(trigger_pin=23, echo_pin=24),
         #GPS(port='/dev/ttyAMA0'),
-        #MPU6050(),
-        #LSM6DS3()
+        MPU6050()
     ]
 
     for sensor in sensors:
