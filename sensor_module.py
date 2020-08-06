@@ -41,6 +41,8 @@ class HCSR04(Thread):
 #GPS模組
 class GPS(Thread):
     def __init__(self, port = '/dev/ttyAMA0'):
+        Thread.__init__(self)
+
         self._port = port
         self._lat = None
         self._lng = None
@@ -76,6 +78,8 @@ class GPS(Thread):
 #陀螺儀與加速度感測模組
 class MPU6050(Thread):
     def __init__(self):
+        Thread.__init__(self)
+        
         self._bus = smbus.SMBus(1)
         self._power_mgmt = 0x6b
         self._address = 0x68
@@ -166,6 +170,7 @@ class MPU6050(Thread):
 
             print('X Rotation: ' , x_rotation)
             print('Y Rotation: ' , y_rotation)
+            print('-----------------------------------')
 
             self._x_rotation = x_rotation
             self._y_rotation = y_rotation
