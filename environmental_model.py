@@ -68,6 +68,7 @@ def create_environmental_model(file_path, height, width, resolution, bboxes):
             'class': bbox.clsName,
             'confidence': str(bbox.confidence),
             'distance': str(bbox.distance),
+            'angle': str(bbox.angle),
             'coordinate': {
                 'lt': lt,
                 'rt': rt,
