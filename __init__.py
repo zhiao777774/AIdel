@@ -1,8 +1,8 @@
 import sys
 import signal
 import time
-import math
 import cv2
+import numpy as np
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
@@ -134,7 +134,8 @@ def _calc_distance(frame, dets):
         x = int(bbox.center()[0] - bbox.width / 4)
         y = int(bbox.coordinates.lt.y - 10)
         cv2.putText(frame, text=f'{distance}cm', org=(x, y),
-                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, color=(0, 0, 255), thickness=2)
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, 
+                    color=(0, 0, 255), thickness=2)
 
     return bboxes
 
@@ -156,26 +157,24 @@ def _calc_angle(frame, bboxes):
     h = frame.shape[0]
     w = frame.shape[1]
 
-    v1_x = w / 2
-    v1_y = h
     for bbox in bboxes:
         v2_x, v2_y = bbox.center()
-        dot = v1_x * v2_x + v1_y * v2_y
-        v1_norm = math.sqrt(v1_x * v1_x + v1_y * v1_y)
-        v2_norm = math.sqrt(v2_x * v2_x + v2_y * v2_y)
-        cos_angle = dot / (v1_norm * v2_norm)
+        v1 = np.array([w / 2, h])
+        v2 = np.array([v2_x, v2_y])
+        line_v1 = np.sqrt(v1.dot(v1))
+        line_v2 = np.sqrt(v2.dot(v2))
 
-        angle = math.acos(cos_angle)
-        if cos_angle > 1.0: 
-            angle = 0.0
-        elif cos_angle < -1.0: 
-            angle = math.pi
+        cos_angle = v1.dot(v2) / (line_v1 * line_v2)
+        angle = np.arccos(cos_angle)
+        angle = round(angle * 360 / 2 / np.pi, 1)
         bbox.angle = angle
-
+        
+        print(f'angle degrees {angle}')
         x = int(v2_x - bbox.width / 4)
         y = int(bbox.coordinates.lt.y - 25)
         cv2.putText(frame, text=f'{angle}°', org=(x, y),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, color=(0, 0, 255), thickness=2)
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, 
+                    color=(0, 0, 255), thickness=2)
     
     return bboxes
 '''
