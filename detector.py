@@ -88,3 +88,11 @@ class BoundingBox:
     @distance.setter
     def distance(self, distance):
         self._distance = distance
+
+    @property
+    def angle(self):
+        return self._angle if self._angle else None
+
+    @angle.setter
+    def angle(self, angle):
+        self._angle = angle

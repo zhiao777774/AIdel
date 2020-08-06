@@ -1,6 +1,7 @@
 import sys
 import signal
 import time
+import math
 import cv2
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -55,6 +56,7 @@ def initialize():
             bboxes = []
             if dets:
                 bboxes = _calc_distance(result, dets)
+                bboxes = _calc_angle(result, bboxes)
                 create_environmental_model(
                     file_path = f'{ROOT_PATH}/data/environmentalModel.json',
                     height = result.shape[0], width = result.shape[1],
@@ -149,6 +151,33 @@ def _measure_distance(calibration_distance, focallen, bbox):
     print(f'Distance in cm {distance}')
 
     return distance
+
+def _calc_angle(frame, bboxes):
+    h = frame.shape[0]
+    w = frame.shape[1]
+
+    v1_x = w / 2
+    v1_y = h
+    for bbox in bboxes:
+        v2_x, v2_y = bbox.center()
+        dot = v1_x * v2_x + v1_y * v2_y
+        v1_norm = math.sqrt(v1_x * v1_x + v1_y * v1_y)
+        v2_norm = math.sqrt(v2_x * v2_x + v2_y * v2_y)
+        cos_angle = dot / (v1_norm * v2_norm)
+
+        angle = math.acos(cos_angle)
+        if cos_angle > 1.0: 
+            angle = 0.0
+        elif cos_angle < -1.0: 
+            angle = math.pi
+        bbox.angle = angle
+
+        x = int(v2_x - bbox.width / 4)
+        y = int(bbox.coordinates.lt.y - 25)
+        cv2.putText(frame, text=f'{angle}°', org=(x, y),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.50, color=(0, 0, 255), thickness=2)
+    
+    return bboxes
 '''
 def _save_image(image, db, is_first = False):
     t = time.localtime()
