@@ -57,7 +57,7 @@ class GPS(Thread):
                 lat = new_msg.latitude
                 lng = new_msg.longitude
                 
-                print(f'Latitude: {str(lat)}, Longitude: {str(lng)}')
+                print(f'latitude: {str(lat)}, longitude: {str(lng)}')
                 self._lat = str(lat)
                 self._lng = str(lng)
 
@@ -177,19 +177,37 @@ class MPU6050(Thread):
 
             time.sleep(1)
 
-    def gyroskop(self):
-        return {
+    def _skaliert(self, value, scale):
+        return value / scale
+
+    def gyroskop(self, skaliert = True):
+        scale = 131
+        gyroskop = {
             'x': self._gyroskop_xout,
             'y': self._gyroskop_yout,
             'z': self._gyroskop_zout
         }
 
-    def beschleunigungssensor(self):
-        return {
+        if skaliert:
+            for axis in ('x', 'y', 'z'):
+                gyroskop[axis] = self._skaliert(gyroskop[axis], scale)
+
+        return gyroskop
+
+    def beschleunigungssensor(self, skaliert = True):
+        scale = 16384.0
+        beschleunigungssensor = {
             'x': self._beschleunigung_xout,
             'y': self._beschleunigung_yout,
             'z': self._beschleunigung_zout
         }
+
+        if skaliert:
+            for axis in ('x', 'y', 'z'):
+                beschleunigungssensor[axis] = \
+                    self._skaliert(beschleunigungssensor[axis], scale)
+
+        return beschleunigungssensor
 
     def rotation(self):
         return {
