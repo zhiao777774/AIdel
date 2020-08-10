@@ -7,13 +7,13 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 
 from .file_controller import ROOT_PATH
-#from .image_processor import ImageProcessor
+# from .image_processor import ImageProcessor
 from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
-from .db_handler import MongoDB, np_cvt_base64img
+from .guardianship_service import GuardianshipService
 from .sensor_module import HCSR04, GPS, MPU6050, destroy_sensors
 
 
@@ -45,55 +45,57 @@ def initialize():
     _signal_handle()
     _init_services()
     _enable_sensors()
-    with MongoDB('120.125.83.10', '8080') as db:
-        dodger = Dodger()
-        resp = Responser()
+    
+    dodger = Dodger()
+    resp = Responser()
 
-        for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
-            frame = frame.array
-            result, dets = detect(frame)
+    for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
+        frame = frame.array
+        result, dets = detect(frame)
 
-            bboxes = []
-            if dets:
-                bboxes = _calc_distance(result, dets)
-                bboxes = _calc_angle(result, bboxes)
-                create_environmental_model(
-                    file_path = f'{ROOT_PATH}/data/environmentalModel.json',
-                    height = result.shape[0], width = result.shape[1],
-                    resolution = _RESOLUTION, bboxes = bboxes)
+        bboxes = []
+        if dets:
+            bboxes = _calc_distance(result, dets)
+            bboxes = _calc_angle(result, bboxes)
+            create_environmental_model(
+                file_path = f'{ROOT_PATH}/data/environmentalModel.json',
+                height = result.shape[0], width = result.shape[1],
+                resolution = _RESOLUTION, bboxes = bboxes)
 
-            cv2.namedWindow('result', cv2.WINDOW_NORMAL)
-            cv2.imshow('result', result)
-            # out.write(result)
-            
-            if bboxes:
-                h = int(result.shape[0] / 2)
-                w = result.shape[1]
-                maze = generate_maze(data = bboxes, height = h, width = w,
-                    benchmark = h, resolution = _RESOLUTION)
-                maze = Maze(maze)
+        cv2.namedWindow('result', cv2.WINDOW_NORMAL)
+        cv2.imshow('result', result)
+        # out.write(result)
+        # _save_image(result)
+        
+        if bboxes:
+            h = int(result.shape[0] / 2)
+            w = result.shape[1]
+            maze = generate_maze(data = bboxes, height = h, width = w,
+                benchmark = h, resolution = _RESOLUTION)
+            maze = Maze(maze)
 
-                try:
-                    dirs = dodger.solve(maze)
-                except (PathNotFoundError, IndexError) as err:
-                    cv2.waitKey(1) & 0xFF
-                    raw_capture.truncate(0) 
-                    print(err)
-                    continue              
+            try:
+                dirs = dodger.solve(maze)
+            except (PathNotFoundError, IndexError) as err:
+                cv2.waitKey(1) & 0xFF
+                raw_capture.truncate(0)
+                print(err)
+                continue     
 
-                print(maze)
-                print(dirs)
-                res_audio_file = resp.decide_response(dirs[0])
-                resp.play_audio(res_audio_file)
-            
-            cv2.waitKey(1) & 0xFF
-            raw_capture.truncate(0)
+            print(maze)
+            print(dirs)
+            res_audio_file = resp.decide_response(dirs[0])
+            resp.play_audio(res_audio_file)
+        
+        cv2.waitKey(1) & 0xFF
+        raw_capture.truncate(0)
 
 
 _DICT_SERVICE = {}
 def _init_services():
     serivces = [
-        SpeechService()
+        SpeechService(),
+        # GuardianshipService(interval=6)
     ]
 
     for service in serivces:
@@ -105,7 +107,7 @@ _DICT_SENSORS = {}
 def _enable_sensors():
     sensors = [
         HCSR04(trigger_pin=23, echo_pin=24),
-        #GPS(port='/dev/ttyAMA0'),
+        # GPS(port='/dev/ttyAMA0'),
         MPU6050()
     ]
 
@@ -177,57 +179,18 @@ def _calc_angle(frame, bboxes):
                     color=(0, 0, 255), thickness=2)
     
     return bboxes
-'''
-def _save_image(image, db, is_first = False):
-    t = time.localtime()
 
-    n = 0
-    while t.tm_min > 6 * n: n += 1
+def _save_image(image):
+    lat, lng = _DICT_SENSORS['GPS'].latlng()
+    address = ''
 
-    diff_min = 6 * n - t.tm_min
-    diff_sec = 60 - t.tm_sec
-    diff_time = diff_min * 60 + diff_sec
+    _DICT_SERVICE['GuardianshipService'].data = {
+        'image': image,
+        'lat': lat,
+        'lng': lng,
+        'address': address
+    }
 
-    if is_first or diff_min <= 0: _save(image, db)
-
-    @set_interval(diff_time, 1)
-    def _save(image, db):
-        t = time.localtime()
-        fdate = time.strftime('%Y/%m/%d', t)
-        ftime = f'{t.tm_hour}:{"00" if t.tm_min < 30 else "30"}'
-        lat = 0
-        lng = 0
-        address = ''
-
-        insert_data = {
-            'date': fdate,
-            'data': [{
-                'time': ftime,
-                'data': [{
-                    'id': t.tm_min / 6,
-                    'image': np_cvt_base64img(image),
-                    'description': address
-                }]
-            }],
-            'locations': [{
-                'latitude': lat,
-                'longitude': lng
-            }]
-        }
-
-        def _insert(data):
-            insert_data['data'] += data['data']
-            insert_data['locations'] += data['locations']
-            db.insert({
-                'collection': 'historicalImage',
-                'data': insert_data
-            })
-
-        db.select({
-            'collection': 'historicalImage',
-            'filter': { 'date': fdate }
-        }, _insert)
-'''
 def _signal_handle():
     def _handler(signal, frame):
         cv2.destroyAllWindows()
