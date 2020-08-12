@@ -9,7 +9,7 @@ from hcsr04sensor import sensor as hcsr04
 
 
 GPIO.setmode(GPIO.BCM)
-#超音波模組
+# 超音波模組
 class HCSR04(Thread):
     def __init__(self, trigger_pin, echo_pin):
         Thread.__init__(self)
@@ -38,7 +38,7 @@ class HCSR04(Thread):
         return self._distance
 
 
-#GPS模組
+# GPS模組
 class GPS(Thread):
     def __init__(self, port = '/dev/ttyAMA0'):
         Thread.__init__(self)
@@ -75,7 +75,7 @@ class GPS(Thread):
         return self._lng
 
 
-#陀螺儀與加速度感測模組
+# 陀螺儀與加速度感測模組
 class MPU6050(Thread):
     def __init__(self):
         Thread.__init__(self)
@@ -215,6 +215,20 @@ class MPU6050(Thread):
             'y': self._y_rotation
         }
 
+
+# 蜂鳴器
+class Buzzer:
+    def __init__(self, buzzer_pin):
+        GPIO.setup(buzzer_pin, GPIO.OUT)
+        self.BUZZER_PIN = buzzer_pin
+
+    def buzz(self, frequency, duration = 1):
+        buzzer = GPIO.PWM(self.BUZZER_PIN, 50)
+        buzzer.ChangeFrequency(frequency)
+        time.sleep(duration)
+
+        buzzer.stop()
+    
 
 def destroy_sensors():
     GPIO.cleanup()
