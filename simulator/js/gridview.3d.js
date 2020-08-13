@@ -1,6 +1,9 @@
 class GridView3D {
+    #data = [];
+
     constructor() {
-        this.modelData = [];
+        this.step = 1;
+        this.rpi = {};
         this.layout = {
             margin: { l: 0, r: 0, b: 0, t: 0 },
             legend: {
@@ -11,130 +14,214 @@ class GridView3D {
             },
             scene: {
                 xaxis: {
-                    nticks: 10,
-                    range: [0, 100]
+                    backgroundcolor: 'rgb(200, 200, 230)',
+                    gridcolor: 'rgb(255, 255, 255)',
+                    showbackground: true,
+                    zerolinecolor: 'rgb(255, 255, 255)',
+                    nticks: 15,
+                    range: [90, 0]
+                    //ticktext:['90', '75', '60', '45', '30', '15', '0'],
+                    //tickvals:[90, 75, 60, 45, 30, 15, 0]
                 },
                 yaxis: {
-                    nticks: 10,
-                    range: [0, 100]
+                    backgroundcolor: 'rgb(230, 200, 230)',
+                    gridcolor: 'rgb(255, 255, 255)',
+                    showbackground: true,
+                    zerolinecolor: 'rgb(255, 255, 255)',
+                    nticks: 15,
+                    range: [0, 180]
+                    //ticktext:['0', '15', '30', '45', '60', '75', '90', '105', '120', '135', '150', '165', '180'],
+                    //tickvals:[0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180]
                 },
                 zaxis: {
+                    backgroundcolor: 'rgb(230, 230, 200)',
+                    gridcolor: 'rgb(255, 255, 255)',
+                    showbackground: true,
+                    zerolinecolor: 'rgb(255, 255, 255)',
                     nticks: 2,
-                    range: [0, 20]
+                    range: [0, 10]
                 },
                 camera: {
-                    eye: { x: 1, y: 2, z: 1.5 }
+                    eye: { x: 1, y: 2, z: 1.8 }
                 }
             }
         };
-        this.batchCode = 1;
+
+        this.lock = false;
     }
 
     initialize() {
-        this.modelData.push({
-            name: 'user',
-            text: 'user',
-            x: [50],
-            y: [100],
-            z: [0],
+        Plotly.newPlot('model-3d', [{
+            x: [45], y: [180], z: [0],
             hoverinfo: 'text',
             mode: 'markers',
-            marker: {
-                size: 10,
-            },
+            marker: { size: 10 },
             type: 'scatter3d'
-        });
-        Plotly.newPlot('model-3d', this.modelData, this.layout);
+        }], this.layout);
     }
 
     generate(model) {
-        console.log(model);
+        console.log('model: \r\n' + model);
+        if (this.lock) return;
 
-        let { height, width, resolution } = model;
-        height /= 10;
-        width /= 10;
-        resolution /= 10;
-        height += resolution;
+        this.height = 180;
+        this.width = 90;
+        this.resolution = 15;
 
         this.layout.scene.xaxis = {
-            nticks: resolution,
-            range: [0, width]
+            nticks: this.resolution,
+            range: [this.width, 0]
         };
 
         this.layout.scene.yaxis = {
-            nticks: resolution,
-            range: [0, height]
+            nticks: this.resolution,
+            range: [0, this.height]
         };
 
-        model.obstacles.forEach(({ class: clsName, coordinate }) =>
-            this.insertByClsName(width, height, clsName, coordinate));
-
-        const index = this.modelData
-            .findIndex((item) => item.name === 'user');
-        if (index >= 0) {
-            this.modelData[index].x = [width / 2];
-            this.modelData[index].y = [height];
-        } else {
-            this.modelData.push({
-                name: 'user',
-                text: 'user',
-                x: [width / 2],
-                y: [height],
-                z: [0],
+        const index = this.#data.findIndex(({ name }) => name === `T${this.step}`);
+        const x = this.width / 2,
+            y = this.height - this.resolution * (this.step - 1);
+        if (index < 0) {
+            this.rpi = { x, y };
+            this.#data.push({
+                name: `T${this.step}`,
+                text: `T${this.step}`,
+                x: [x], y: [y], z: [0],
                 hoverinfo: 'text',
                 mode: 'markers',
-                marker: {
-                    size: 10,
-                },
-                type: 'scatter3d'
+                marker: { size: 10 },
+                type: 'scatter3d',
+                obj: []
             });
+        } else {
+            this.#data[index].x = [x];
+            this.#data[index].y = [y];
+            this.#data[index].z = [0];
+            this.#data[index].obj = [];
         }
 
-        console.log(this.modelData);
-        Plotly.newPlot('model-3d', this.modelData, this.layout);
+        model.obstacles.forEach(({
+            class: clsName, distance, angle, coordinate
+        }) => this.insert({
+            scale: model.width / this.width,
+            clsName, distance, angle, coordinate
+        }));
 
-        this.batchCode += 1;
+        console.log(this.#data);
+        this._writeResult();
+
+        Plotly.newPlot('model-3d', this.#data, this.layout);
+        /*.then((gd) => {
+            Plotly.toImage(gd, { height: 80, width: 80 })
+                .then((url) => $(`#model-result-img${this.step}`)
+                    .attr('src', url));
+        });*/
     }
 
-    insertByClsName(width, height, clsName, coordinate) {
-        let { lt, rt, lb, rb } = coordinate;
-        lb.x /= 10;
-        lb.y /= 10;
-        rb.x /= 10;
-        rb.y /= 10;
-        const xCenter = (lb.x + rb.x) / 2;
-        const r = xCenter - lb.x;
+    insert({ scale, clsName, distance, angle, coordinate }) {
+        const { lb, rb } = coordinate;
+        lb.x /= scale;
+        lb.y /= scale;
+        rb.x /= scale;
+        rb.y /= scale;
 
-        const index = this.modelData
-            .findIndex((item) => item.name === clsName);
-        if (index >= 0) {
-            this.modelData[index].text.push(`第${this.batchCode}次 - ${clsName}`);
-            this.modelData[index].x.push(width - xCenter);
-            this.modelData[index].y.push(lb.y);
-            this.modelData[index].z.push(0);
-            this.modelData[index].marker.size.push(r);
-            this.modelData[index].marker.line.width.push(2);
+        const xCenter = (lb.x + rb.x) / 2;
+        const y = this.rpi.y - distance;
+        const x = this.rpi.x + (xCenter > this.rpi.x ?
+            -Math.tan(angle) : Math.tan(angle)) * distance;
+
+        const index = this.#data.findIndex(({ name }) => name === `T${this.step}`);
+        this.#data[index].x.push(x);
+        this.#data[index].y.push(y);
+        this.#data[index].z.push(0);
+        this.#data[index].obj.push({
+            x, y, clsName,
+            angle, distance
+        });
+    }
+
+    /*_writeResult(obstacles, direction = '') {
+        const nObstacle = {};
+        obstacles.forEach(({ class: clsName }) => {
+            if (nObstacle[clsName]) nObstacle[clsName]++;
+            else nObstacle[clsName] = 1;
+        });
+
+        $('#model-result-div div.card-body').append(`
+        <div id='model-result-${this.step}'>
+            <h5 style='font-weight: bold;'>Step${this.step}</h5>
+            <span>避障路線: ${direction}</span><br />
+            ${
+            Object.keys(nObstacle).map((clsName) =>
+                `<span>${clsName}: ${nObstacle[clsName]}個</span><br />`)
+            }
+            <!--img id='model-result-img${this.step}'-->
+        </div>
+        <hr />
+    `).animate({ scrollTop: $(`#model-result-${this.step}`).offset().top }, 800);
+    }*/
+
+    _writeResult() {
+        const $body = $('#model-result-div div.card-body');
+        const index = this.#data
+            .findIndex(({ name }) => name === `T${this.step}`);
+        const content = `
+            <h5 style='font-weight: bold;'>T${this.step}</h5>
+            <table class="table" style="width: 500px;">
+                <thead>
+                    <tr>
+                        <th scope="col">class</th>
+                        <th scope="col">x</th>
+                        <th scope="col">y</th>
+                        <th scope="col">angle</th>
+                        <th scope="col">distance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${
+                        this.#data[index].obj.map(({ x, y, clsName, angle, distance }) =>
+                            `
+                                <tr>
+                                    <th scope="row">${clsName}</th>
+                                    <td>${x}</td>
+                                    <td>${y}</td>
+                                    <td>${angle}</td>
+                                    <td>${distance}</td>
+                                </tr>
+                            `)
+                        }
+                </tbody>
+            </table>
+            <!--img id='model-img-T${this.step}'-->
+        `;
+
+        if ($body.has(`#model-T${this.step}`).length) {
+            $body.children(`#model-T${this.step}`)
+                .empty().html(content);
         } else {
-            this.modelData.push({
-                name: clsName,
-                text: [`第${this.batchCode}次 - ${clsName}`],
-                x: [width - xCenter],
-                y: [lb.y],
-                z: [0],
-                hoverinfo: 'text',
-                mode: 'markers',
-                marker: {
-                    symbol: 'circle-open',
-                    size: [r],
-                    line: {
-                        width: [2]
-                    }
-                },
-                type: 'scatter3d'
-            });
+            $body.append(`
+                <div id="model-T${this.step}">
+                    ${content}
+                </div>
+            `);
         }
+
+        $body.animate({ 
+            scrollTop: $(`#model-T${this.step}`).offset().top 
+        }, 800);
+
+        socketEmit('writeEnvironmentalModel', 
+            this.#data.map(({obj}) => obj));
     }
 }
 
 const gridview3d = new GridView3D();
 const dynamicGenerateGridView = (model) => gridview3d.generate(model);
+
+$(function () {
+    $('#btnChangePosition').click(() => {
+        gridview3d.step++;
+        gridview3d.lock = true;
+        setTimeout(() => gridview3d.lock = false, 3000);
+    });
+});
