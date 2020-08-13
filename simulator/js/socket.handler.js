@@ -6,5 +6,5 @@ socket.on('environmentalModel', (model) => {
 });
 
 function socketEmit(event, data) {
-    socket.emit(evnet, data);
+    socket.emit(event, data);
 }
