@@ -45,7 +45,7 @@ def initialize():
     _signal_handle()
     _init_services()
     _enable_sensors()
-    _DICT_SERVICE['GuardianshipService'].mpu = _DICT_SENSORS['MPU6050']
+    # _DICT_SERVICE['GuardianshipService'].mpu = _DICT_SENSORS['MPU6050']
     
     dodger = Dodger()
     resp = Responser()
@@ -196,7 +196,7 @@ def _signal_handle():
     def _handler(signal, frame):
         cv2.destroyAllWindows()
         destroy_sensors()
-        _DICT_SERVICE['GuardianshipService'].stop()
+        # _DICT_SERVICE['GuardianshipService'].stop()
         disconnect_environmental_model_socket()
         sys.exit(0)
 

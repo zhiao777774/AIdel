@@ -7,7 +7,7 @@ from threading import Thread
 from serial import Serial
 from hcsr04sensor import sensor as hcsr04
 
-from .util import AsyncTimer
+from .utils import AsyncTimer
 
 
 GPIO.setmode(GPIO.BCM)
