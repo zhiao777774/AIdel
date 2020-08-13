@@ -35,7 +35,7 @@ class GuardianshipService(Thread):
             if not self.mpu: continue 
 
             accel = self.mpu.beschleunigungssensor()
-            if accel['z'] <= 0:
+            if accel['z'] <= 0.1:
                 print('疑似發生跌倒!')
                 timer.start()
 
@@ -147,7 +147,7 @@ class GuardianshipService(Thread):
                 timer.stop()
 
 
-def latlng_query_addr(lat, lng, buffer=150):
+def latlng_query_addr(lat, lng, buffer=100):
     service_url = 'https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr'
     params = {
         'oAPPId': '',
@@ -166,5 +166,9 @@ def latlng_query_addr(lat, lng, buffer=150):
     address = ''
     if response.status_code == 200:
         res = response.json()
+        total = res['Info']['Total']
+
+        if total > 0:
+            address = res['AddressList'][0]['FULL_ADDR']
 
     return address
