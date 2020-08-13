@@ -171,14 +171,15 @@ def _replace_and_trim(text, old, new=''):
 
 
 class TextToSpeech:
-    def __init__(self, subscription_key, input_text):
+    def __init__(self, subscription_key, region_identifier, input_text):
         self.subscription_key = subscription_key
+        self.region_identifier = region_identifier
         self.tts = input_text
         self.timestr = time.strftime('%Y%m%d-%H%M')
         self.access_token = self._get_token()
 
     def _get_token(self):
-        fetch_token_url = 'https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken'
+        fetch_token_url = f'https://{self.region_identifier}.api.cognitive.microsoft.com/sts/v1.0/issueToken'
         headers = {
             'Ocp-Apim-Subscription-Key': self.subscription_key
         }
@@ -186,27 +187,26 @@ class TextToSpeech:
         return str(response.text)
 
     def save_audio(self):
-        base_url = 'https://westus.tts.speech.microsoft.com/'
+        base_url = f'https://{self.region_identifier}.tts.speech.microsoft.com/'
         path = 'cognitiveservices/v1'
         constructed_url = base_url + path
         headers = {
             'Authorization': 'Bearer ' + self.access_token,
             'Content-Type': 'application/ssml+xml',
             'X-Microsoft-OutputFormat': 'riff-24khz-16bit-mono-pcm',
-            'User-Agent': 'YOUR_RESOURCE_NAME'
+            'User-Agent': 'AIdel'
         }
         xml_body = ElementTree.Element('speak', version='1.0')
-        xml_body.set('{http://www.w3.org/XML/1998/namespace}lang', 'en-us')
+        xml_body.set('{http://www.w3.org/XML/1998/namespace}lang', 'zh-tw')
         voice = ElementTree.SubElement(xml_body, 'voice')
-        voice.set('{http://www.w3.org/XML/1998/namespace}lang', 'en-US')
+        voice.set('{http://www.w3.org/XML/1998/namespace}lang', 'zh-TW')
         voice.set(
-            'name', 'Microsoft Server Speech Text to Speech Voice (en-US, Guy24kRUS)')
+            'name', 'Microsoft Server Speech Text to Speech Voice (zh-TW, HsiaoYuNeural)')
         voice.text = self.tts
         body = ElementTree.tostring(xml_body)
 
         response = requests.post(constructed_url, headers=headers, data=body)
         if response.status_code == 200:
-            # with open('sample-' + self.timestr + '.wav', 'wb') as audio:
             with open(self.tts + '.wav', 'wb') as audio:
                 audio.write(response.content)
                 print('\nStatus code: ' + str(response.status_code) +
@@ -225,8 +225,9 @@ class Responser:
         return res[direction]
 
     def tts(self, input_text):
-        subscription_key = ''
-        app = TextToSpeech(subscription_key, input_text)
+        subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'
+        region_identifier = 'southcentralus'
+        app = TextToSpeech(subscription_key, region_identifier, input_text)
         app.save_audio()
 
     def play_audio(self, audio_name):
