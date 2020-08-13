@@ -5,6 +5,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from .db_handler import MongoDB, np_cvt_base64img
 from .sensor_module import Buzzer
+from .utils import AsyncTimer
 
 
 class GuardianshipService(Thread):
@@ -15,6 +16,9 @@ class GuardianshipService(Thread):
         self.mpu = None
         self._interval = interval
         self._sched = BlockingScheduler()
+
+        self.speech = ''
+        self._cancel = False
         
     def run(self):
         period = ''
@@ -25,14 +29,27 @@ class GuardianshipService(Thread):
         self._sched.start()
 
         buzzer = Buzzer(buzzer_pin = 16)
+        timer = AsyncTimer()
+        pushed = False
         while True:
             if not self.mpu: continue 
 
             accel = self.mpu.beschleunigungssensor()
             if accel['z'] <= 0:
                 print('疑似發生跌倒!')
-                buzzer.buzz(698, 0.5)
-                buzzer.buzz(523, 0.5)
+                timer.start()
+
+                if timer.elapsed_time >= 15 and not pushed and not self._cancel:
+                    print('發送緊急推播!')
+                    self.push_notification(noti_type = '跌倒')
+                    pushed = True
+                else: 
+                    buzzer.buzz(698, 0.5)
+                    buzzer.buzz(523, 0.5)
+            else:
+                print('解除跌倒警報!')
+                timer.stop()
+                pushed = False
 
             time.sleep(1)
 
@@ -84,9 +101,50 @@ class GuardianshipService(Thread):
                 'collection': 'historicalImage',
                 'filter': { 'date': fdate }
             }, _insert)
+
+    def push_notification(self, noti_type):
+        if not self.data: return
+        if not isinstance(noti_type, str): return
+
+        with MongoDB('120.125.83.10', '8080') as db:
+            t = time.localtime()
+            date = time.strftime('%Y/%m/%d %H:%M', t)
+            lat = self.data['lat']
+            lng = self.data['lng']
+            address = latlng_query_addr(lat = lat, lng = lng)
+
+            db.insert({
+                'collection': 'historicalAccident',
+                'data': {
+                    'date': date,
+                    'type': noti_type,
+                    'location': {
+                        'address': address,
+                        'latitude': lat,
+                        'longitude': lng
+                    }
+                }
+            })
         
     def stop(self):
         self._sched.remove_job('save_image_job')
+
+    @property
+    def cancel(self):
+        return self._cancel
+
+    @cancel.setter
+    def cancel(self, cancel):
+        if cancel == self._cancel: return
+
+        self._cancel = cancel
+        if cancel:
+            timer = AsyncTimer()
+            timer.start()
+
+            if timer.elapsed_time >= 10:
+                self._cancel = False
+                timer.stop()
 
 
 def latlng_query_addr(lat, lng, buffer=150):
