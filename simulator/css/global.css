@@ -82,7 +82,11 @@
 }
 
 #model-result-div .card-body hr:last-of-type {
-    margin-bottom: 10px;
+    margin-bottom: 200px;
+}
+
+#model-result-div .card-body.scrollbar {
+    height: 900px;
 }
 
 #info-div,
@@ -97,4 +101,14 @@
 #model-3d {
     width: 900px;
     height: 90vh;
+}
+
+#model-result-div .card-header button {
+    margin-left: 20px;
+    margin-bottom: 6px;
+    padding: 2px 5px;
+    padding-bottom: 3px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 3px;
 }
