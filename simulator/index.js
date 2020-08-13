@@ -17,14 +17,15 @@ io.on('connection', (socket) => {
     });
 
     socket.on('writeEnvironmentalModel', (data) => {
-        const path = __dirname + 'data/environmentalModel.txt';
-        if (fs.existsSync(path))
+        console.log('write Environmental model.');
+        const path = __dirname + '/data/environmentalModel.txt';
+        if (!fs.existsSync(path))
             fs.mkdirSync(path)
 
         const fst = fs.createWriteStream(path);
         data.forEach((item, i) => {
             fst.write(`T${i + 1}\r\n`);
-            fst.write('---------------\r\n');
+            fst.write('-----------------------------------\r\n');
             fst.write('class   x   y   angle   distance\r\n');
             item.forEach(({ x, y, clsName, angle, distance }) => {
                 fst.write(clsName + '   ');
