@@ -16,6 +16,27 @@ io.on('connection', (socket) => {
         io.emit('environmentalModel', model);
     });
 
+    socket.on('writeEnvironmentalModel', (data) => {
+        const path = __dirname + 'data/environmentalModel.txt';
+        if (fs.existsSync(path))
+            fs.mkdirSync(path)
+
+        const fst = fs.createWriteStream(path);
+        data.forEach((item, i) => {
+            fst.write(`T${i + 1}\r\n`);
+            fst.write('---------------\r\n');
+            fst.write('class   x   y   angle   distance\r\n');
+            item.forEach(({ x, y, clsName, angle, distance }) => {
+                fst.write(clsName + '   ');
+                fst.write(x + '   ');
+                fst.write(y + '   ');
+                fst.write(angle + '   ');
+                fst.write(distance + '\r\n');
+            });
+            fst.write('\r\n');
+        });
+    });
+
     socket.on('disconnect', () => console.log(`socket disconnect id: ${socket.id}`));
 });
 
