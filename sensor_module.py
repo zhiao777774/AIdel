@@ -7,6 +7,8 @@ from threading import Thread
 from serial import Serial
 from hcsr04sensor import sensor as hcsr04
 
+from .util import AsyncTimer
+
 
 GPIO.setmode(GPIO.BCM)
 # 超音波模組
@@ -228,7 +230,33 @@ class Buzzer:
         time.sleep(duration)
 
         buzzer.stop()
-    
+
+
+# 緊急按鈕
+class EmergencyButton(Thread):
+    def __init__(self, button_pin, service):
+        Thread.__init__(self)
+
+        self._service = service
+        self.BUTTON_PIN = button_pin
+        GPIO.add_event_detect(button_pin, GPIO.FALLING, 
+            callback = self.btn_press, bouncetime = 200)
+
+    def btn_press(self):
+        timer = AsyncTimer()
+        timer.start()
+
+        while GPIO.input(self.BUTTON_PIN) == 0:
+            timer.stop()
+
+        if timer.elasped_time >= 2:
+            content = self._service.speech
+            self._service.push_notification(f'緊急狀況: {content}')
+        else:
+            self._service.cancel = True
+
+        time.sleep(1)
+
 
 def destroy_sensors():
     GPIO.cleanup()
