@@ -6,22 +6,22 @@ class Timer:
     def __init__(self):
         self._start_time = None
         self._elapsed_time = 0
-        self.is_stop = False
+        self._is_stop = False
 
     def start(self):
         if self._start_time: return
 
-        self.is_stop = False
+        self._is_stop = False
         self._elapsed_time = 0
         self._start_time = time.perf_counter()
-        while not self.is_stop:
+        while not self._is_stop:
             end_time = time.perf_counter()
             self._elapsed_time += end_time - self._start_time
             self._start_time = time.perf_counter()
             time.sleep(0.01)
 
     def stop(self):
-        self.is_stop = True
+        self._is_stop = True
         self._start_time = None
             
     @property
