@@ -1,21 +1,18 @@
-.title {
-    display: table;
-    text-align: center;
-    margin-top: -2px;
-    margin-bottom: 0px;
-    margin-left: 10px;
-    margin-right: 40px;
+nav {
+    border-bottom: gainsboro solid .3px;
 }
 
-.title h2 {
-    margin: 0 auto;
-    display: table-cell;
-    vertical-align: middle;
+nav a {
+    margin-top: 10px;
+    height: 6vh;
     font-weight: bold;
+    color: black;
+    margin-left: 20px;
 }
 
-.title h2 span {
+nav .disabled.title {
     color: brown;
+    margin-left: 20px;
 }
 
 .card-body {
@@ -34,7 +31,7 @@
 }
 
 .card-body.scrollbar::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
     background-color: #F5F5F5;
 }
 
@@ -51,20 +48,6 @@
     font-weight: 700;
 }
 
-#navbar {
-    background-color: #FFFFCA;
-    padding-top: 10px;
-}
-
-#navbar a {
-    font-weight: bold;
-    color: black;
-}
-
-#navbar a.active {
-    color: rgb(233, 83, 37);
-}
-
 #model-result-div {
     width: calc(100vw - 900px);
     height: 90vh;
@@ -74,6 +57,19 @@
     border-bottom-left-radius: 15px;
 }
 
+#model-result-div .card-body div {
+    margin-left: 25px;
+    margin-bottom: 40px;
+}
+
+#model-result-div .card-body div:first-of-type {
+    margin-bottom: 20px;
+}
+
+#model-result-div .card-body div:last-of-type {
+    margin-bottom: 70px;
+}
+
 #model-result-div .card-body div>img {
     width: 80px;
     height: 80px;
@@ -81,12 +77,16 @@
     float: right;
 }
 
+#model-result-div .card-body hr {
+    margin-right: 30px;
+}
+
 #model-result-div .card-body hr:last-of-type {
     margin-bottom: 200px;
 }
 
 #model-result-div .card-body.scrollbar {
-    height: 900px;
+    height: 600px;
 }
 
 #info-div,
@@ -104,11 +104,17 @@
 }
 
 #model-result-div .card-header button {
-    margin-left: 20px;
+    margin-left: 15px;
     margin-bottom: 6px;
     padding: 2px 5px;
     padding-bottom: 3px;
     font-size: 13px;
     line-height: 1.5;
     border-radius: 3px;
+}
+
+#position {
+    margin-left: 10px;
+    font-weight: bold;
+    font-size: 25px;
 }

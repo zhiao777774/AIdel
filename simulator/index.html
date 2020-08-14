@@ -3,12 +3,12 @@
 
 <head>
     <meta charset='UTF-8'>
-    <meta name="google" content="notranslate">
+    <meta name='google' content='notranslate'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <script src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
     <script src='https://d3js.org/d3.v5.min.js'></script>
     <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js'></script>
     <script src='js/gridview.js'></script>
     <script src='js/gridview.3d.js'></script>
     <script src='js/info.division.js'></script>
@@ -17,23 +17,18 @@
         integrity='sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB' crossorigin='anonymous'>
     <link rel='stylesheet' href='css/global.css'>
     <link rel='stylesheet' href='css/gridview.css'>
-    <title>AIdel避障模擬系統</title>
+    <title>AIdel</title>
 </head>
 
-<body onload="initGridView(5)">
-    <main style='width: 100vw; height: 100vh;'>
-        <ul id="navbar" class="nav nav-tabs">
-            <li class="title">
-                <h2><span>AIdel</span> 避障模擬系統</h2>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link active">避障模擬</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">即時影像</a>
-            </li>
-        </ul>
-        <div id="simulate-div">
+<body onload='initGridView(5)'>
+    <main>
+        <nav class='nav nav-pills nav-justified'>
+            <h2 class='nav-link disabled title'>AIdel</h2>
+            <a href='#' class='nav-link active'>避障模擬</a>
+            <a href='#' class='nav-link'>即時影像</a>
+            <a href='#' class='nav-link'>穿戴式裝置展示</a>
+        </nav>
+        <div id='simulate-div'>
             <div class='input-group'>
                 <input id='n-random' type='text' class='form-control' placeholder='請輸入生成數量' aria-label='請輸入生成數量'
                     aria-describedby='btnRandom'>
@@ -48,31 +43,36 @@
                 <div class='card-body scrollbar'></div>
             </div>
         </div>
-        <div id="model-div" style="display: none;">
+        <div id='model-div' style='display: none;'>
             <div id='model-result-div'>
                 <div class='card-header'>
                     <h3 style='font-weight: bold; display: inline;'>資訊欄</h3>
+                    <button id='btnToggleReceive' class='btn btn-xs btn-primary'>暫停接收</button>
                     <button id='btnChangePosition' class='btn btn-xs btn-danger'>變換位置</button>
+                    <span>
+                        <label id='position'></label>
+                    </span>
                 </div>
                 <div class='card-body scrollbar'>
-                    <h4 class="warn-text">目前socket沒有連線</h4>
+                    <h4 class='warn-text'>目前socket沒有連線</h4>
                 </div>
             </div>
-            <div id="model-3d"></div>
+            <div id='model-3d'></div>
         </div>
+        <div id='equipment-div' style='display: none;'></div>
     </main>
 </body>
 <script>
     let currentPage = 1;
-    $('#navbar li.nav-item').click(function () {
-        $('#navbar li.nav-item a').removeClass('active');
+    $('nav a.nav-link').click(function () {
         $('main > div').hide();
-        $(this).children('a').addClass('active');
+        $(this).parent().children('a')
+            .removeClass('active');
+        $(this).addClass('active');
 
         currentPage = $(this).index();
         $('main > ' + `div:nth-of-type(${currentPage})`).show();
     });
-    $('#navbar ' + `li:nth-of-type(${currentPage})`).click();
 
     $('#n-random').keyup((e) => {
         e = e.target;
