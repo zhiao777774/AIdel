@@ -186,7 +186,7 @@ class TextToSpeech:
         response = requests.post(fetch_token_url, headers=headers)
         return str(response.text)
 
-    def save_audio(self):
+    def save_audio(self, audio_name = ''):
         base_url = f'https://{self.region_identifier}.tts.speech.microsoft.com/'
         path = 'cognitiveservices/v1'
         constructed_url = base_url + path
@@ -197,17 +197,18 @@ class TextToSpeech:
             'User-Agent': 'AIdel'
         }
         xml_body = ElementTree.Element('speak', version='1.0')
-        xml_body.set('{http://www.w3.org/XML/1998/namespace}lang', 'zh-tw')
+        xml_body.set('{http://www.w3.org/XML/1998/namespace}lang', 'zh-TW')
         voice = ElementTree.SubElement(xml_body, 'voice')
         voice.set('{http://www.w3.org/XML/1998/namespace}lang', 'zh-TW')
         voice.set(
-            'name', 'Microsoft Server Speech Text to Speech Voice (zh-TW, HsiaoYuNeural)')
+            'name', 'Microsoft Server Speech Text to Speech Voice (zh-TW, Yating, Apollo)')
         voice.text = self.tts
         body = ElementTree.tostring(xml_body)
 
         response = requests.post(constructed_url, headers=headers, data=body)
         if response.status_code == 200:
-            with open(self.tts + '.wav', 'wb') as audio:
+            audio_name = audio_name or self.tts
+            with open(audio_name + '.wav', 'wb') as audio:
                 audio.write(response.content)
                 print('\nStatus code: ' + str(response.status_code) +
                       '\nYour TTS is ready for playback.\n')
