@@ -14,11 +14,11 @@ class GuardianshipService(Thread):
 
         self.data = dict()
         self.mpu = None
-        self._interval = interval
-        self._sched = BlockingScheduler()
-
         self.speech = ''
         self._cancel = False
+
+        self._interval = interval
+        self._sched = BlockingScheduler()
         
     def run(self):
         period = ''
@@ -32,14 +32,17 @@ class GuardianshipService(Thread):
         timer = AsyncTimer()
         pushed = False
         while True:
-            if not self.mpu: continue 
+            if not self.mpu or self._cancel:
+                timer.stop()
+                time.sleep(1)
+                continue 
 
             accel = self.mpu.beschleunigungssensor()
             if accel['z'] <= 0.1:
                 print('疑似發生跌倒!')
                 timer.start()
 
-                if timer.elapsed_time >= 15 and not pushed and not self._cancel:
+                if timer.elapsed_time >= 15 and not pushed:
                     print('發送緊急推播!')
                     self.push_notification(noti_type = '跌倒')
                     pushed = True
