@@ -61,7 +61,7 @@ class GridView3D {
     }
 
     generate(model) {
-        console.log('model: \r\n' + model);
+        console.log(model);
         if (this.lock) return;
 
         this.height = 180;
@@ -100,6 +100,8 @@ class GridView3D {
             this.#data[index].obj = [];
         }
 
+        $('#position').text(`T${this.step}(${x},${y})`);
+
         model.obstacles.forEach(({
             class: clsName, distance, angle, coordinate
         }) => this.insert({
@@ -113,7 +115,7 @@ class GridView3D {
         Plotly.newPlot('model-3d', this.#data, this.layout);
         /*.then((gd) => {
             Plotly.toImage(gd, { height: 80, width: 80 })
-                .then((url) => $(`#model-result-img${this.step}`)
+                .then((url) => $(`#model-img-T${this.step}`)
                     .attr('src', url));
         });*/
     }
@@ -126,9 +128,12 @@ class GridView3D {
         rb.y /= scale;
 
         const xCenter = (lb.x + rb.x) / 2;
-        const y = this.rpi.y - distance;
-        const x = this.rpi.x + (xCenter > this.rpi.x ?
-            -Math.tan(angle) : Math.tan(angle)) * distance;
+        let y = this.rpi.y - distance;
+        y = Math.round(y * 100) / 100;
+        const radius = angle * Math.PI / 180;
+        let x = this.rpi.x + (xCenter > this.rpi.x ?
+            Math.tan(radius) : -Math.tan(radius)) * distance;
+        x = Math.round(x * 100) / 100;
 
         const index = this.#data.findIndex(({ name }) => name === `T${this.step}`);
         this.#data[index].x.push(x);
@@ -140,32 +145,11 @@ class GridView3D {
         });
     }
 
-    /*_writeResult(obstacles, direction = '') {
-        const nObstacle = {};
-        obstacles.forEach(({ class: clsName }) => {
-            if (nObstacle[clsName]) nObstacle[clsName]++;
-            else nObstacle[clsName] = 1;
-        });
-
-        $('#model-result-div div.card-body').append(`
-        <div id='model-result-${this.step}'>
-            <h5 style='font-weight: bold;'>Step${this.step}</h5>
-            <span>避障路線: ${direction}</span><br />
-            ${
-            Object.keys(nObstacle).map((clsName) =>
-                `<span>${clsName}: ${nObstacle[clsName]}個</span><br />`)
-            }
-            <!--img id='model-result-img${this.step}'-->
-        </div>
-        <hr />
-    `).animate({ scrollTop: $(`#model-result-${this.step}`).offset().top }, 800);
-    }*/
-
     _writeResult() {
         const $body = $('#model-result-div div.card-body');
         const index = this.#data
             .findIndex(({ name }) => name === `T${this.step}`);
-        const content = `
+        let content = `
             <h5 style='font-weight: bold;'>T${this.step}</h5>
             <table class="table" style="width: 500px;">
                 <thead>
@@ -194,6 +178,7 @@ class GridView3D {
             </table>
             <!--img id='model-img-T${this.step}'-->
         `;
+        content = content.replace(new RegExp(',', 'g'), '').trim();
 
         if ($body.has(`#model-T${this.step}`).length) {
             $body.children(`#model-T${this.step}`)
@@ -219,9 +204,22 @@ const gridview3d = new GridView3D();
 const dynamicGenerateGridView = (model) => gridview3d.generate(model);
 
 $(function () {
+    $('#btnToggleReceive').click(function () {
+        if ($(this).text() === '暫停接收') {
+            gridview3d.lock = true;
+            $(this).text('啟用接收');
+        } else {
+            gridview3d.lock = false;
+            $(this).text('暫停接收');
+        }
+    });
+
     $('#btnChangePosition').click(() => {
         gridview3d.step++;
         gridview3d.lock = true;
+        $('#position').text(`T${gridview3d.step}`);
         setTimeout(() => gridview3d.lock = false, 3000);
     });
+
+    $('#position').text(`T${gridview3d.step}`);
 });
