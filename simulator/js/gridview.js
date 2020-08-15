@@ -179,8 +179,29 @@ function simulate(count) {
         scrollTop: $(`div#${count}`).offset().top
     }, 800);
 
-    const dodger = new Dodger(user, end, width, height, resolution, count);
-    dodger.start();
+    const maze = generateMaze(width, height, resolution);
+    console.log(maze);
+    $.ajax({
+        type: 'POST',
+        url: 'http://120.125.83.10:8091/calculatePath',
+        dataType: 'JSON',
+        data: JSON.stringify({ maze }),
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '120.125.83.10'
+        },
+        success: function ({ error, directions }) {
+            if (error) {
+                console.log(error);
+                alert('無法規劃路徑');
+                return;
+            }
+
+            console.log(directions.join('->'));
+            const planner = new PathPlanner(user, resolution, count, directions);
+            planner.solve();
+        }
+    });
 }
 
 function svgSaveAsImg(id) {
@@ -193,111 +214,72 @@ function svgSaveAsImg(id) {
         .attr('src', `data:image/svg+xml;base64,${btoa(svg)}`);
 }
 
-class Dodger {
-    constructor(user, end, width, height, resolution, count) {
+function generateMaze(width, height, resolution) {
+    const maze = [];
+    for (let i = 0; i <= height; i += resolution) {
+        const row = [];
+        for (let j = 0; j <= width; j += resolution) {
+            const circles = d3.select('#simulate-div').select('svg')
+                .selectAll('circle').filter(function () {
+                    return Number(d3.select(this).attr('cx')) === j &&
+                        Number(d3.select(this).attr('cy')) === i;
+                });
+
+            const len = circles.size();
+            let id = '';
+            circles.each(function () { id = this.id; });
+
+            if (len === 0) {
+                row.push(' ');
+            } else if (!id) {
+                row.push('#');
+            } else if (id === 'user') {
+                row.push('S');
+            } else if (id === 'end') {
+                row.push('E');
+            }
+        }
+        maze.push(row);
+    }
+
+    return maze;
+}
+
+class PathPlanner {
+    constructor(user, resolution, count, directions) {
         this.user = user;
-        this.end = end;
-        this.width = width;
-        this.height = height;
         this.resolution = resolution;
+        this.directions = directions;
 
         this.count = count;
         this.time = 0;
         this.step = 1;
     }
 
-    start() {
-        const width = this.width,
-            resolution = this.resolution,
-            cx = Number(this.user.attr('cx')),
-            cy = Number(this.user.attr('cy'));
-        const bound = {
-            lt: {
-                x: (cx - resolution * 4) < 0 ? 0 : (cx - resolution * 4),
-                y: (cy - resolution * 3) < 0 ? 0 : (cy - resolution * 3)
-            },
-            rt: {
-                x: (cx + resolution * 4) > width ? width : (cx + resolution * 4),
-                y: (cy - resolution * 3) < 0 ? 0 : (cy - resolution * 3)
-            },
-            lb: {
-                x: (cx - resolution * 3) < 0 ? 0 : (cx - resolution * 3),
-                y: cy
-            },
-            rb: {
-                x: (cx + resolution * 4) > width ? width : (cx + resolution * 4),
-                y: cy
-            }
-        };
-        this.oldCoord = { x: cx, y: cy };
-
-        let maze = [];
-        for (let i = bound.lt.y; i <= bound.lb.y; i += resolution) {
-            const row = [];
-            for (let j = bound.lt.x; j <= bound.rt.x; j += resolution) {
-                const circles = d3.select('#simulate-div').select('svg')
-                    .selectAll('circle').filter(function () {
-                        return Number(d3.select(this).attr('cx')) === j &&
-                            Number(d3.select(this).attr('cy')) === i;
-                    });
-
-                const len = circles.size();
-                let id = '';
-                circles.each(function () { id = this.id; });
-
-                if (len === 0) {
-                    row.push(' ');
-                } else if (!id) {
-                    row.push('#');
-                } else if (id === 'user') {
-                    row.push('O');
-                } else if (id === 'end') {
-                    row.push('X');
-                }
-            }
-            maze.push(row);
-        }
-
-        isEnd = this._containEnd(maze);
-        if (!isEnd) maze = this._setEndCoordinate(maze, cx, cy, resolution);
-        console.log(maze);
-
-        const planner = new PathPlanner(maze);
-        planner.calculate();
-        const directions = planner.directions;
-
+    solve() {
         let i = 0;
-        this._transformUserCoordinate(directions.charAt(i));
+        this._transformUserCoordinate(this.directions[i]);
         i++;
         intervalID = setInterval(() => {
-            this._transformUserCoordinate(directions.charAt(i));
+            this._transformUserCoordinate(this.directions[i]);
             i++;
         }, 1000);
 
-        if (!isEnd) {
-            timeoutID = setTimeout(() => {
-                clearInterval(intervalID);
-                intervalID = undefined;
-                clearTimeout(timeoutID);
-                timeoutID = undefined;
-                this.start();
-            }, 1000 * directions.length);
-        } else {
-            timeoutID = setTimeout(() => {
-                clearInterval(intervalID);
-                intervalID = undefined;
-                clearTimeout(timeoutID);
-                timeoutID = undefined;
+        timeoutID = setTimeout(() => {
+            clearInterval(intervalID);
+            intervalID = undefined;
+            clearTimeout(timeoutID);
+            timeoutID = undefined;
+            isEnd = true;
 
-                $('#info-div div.card-body').find(`div#${this.count}`)
-                    .append('<span style="color: crimson; font-weight: bold;">抵達終點!</span>')
-                    .append(`<img id='img${this.count}'>`)
-                    .find('h5').addClass('success');
-                svgSaveAsImg(this.count);
-                $('#btnSimulate').text('開始模擬');
-                setTimeout(() => alert('成功抵達終點!'), 200);
-            }, 1000 * directions.length - 1000);
-        }
+            $('#info-div div.card-body').find(`div#${this.count}`)
+                .append('<span style="color: crimson; font-weight: bold;">抵達終點!</span>')
+                .append(`<img id='img${this.count}'>`)
+                .find('h5').addClass('success');
+            svgSaveAsImg(this.count);
+            $('#btnSimulate').text('開始模擬');
+            setTimeout(() => alert('成功抵達終點!'), 200);
+        }, 1000 * this.directions.length - 1000);
     }
 
     _transformUserCoordinate(direction) {
@@ -306,16 +288,16 @@ class Dodger {
         this.oldCoord = { x: x, y: y };
 
         switch (direction) {
-            case 'U':
+            case '^':
                 y -= this.resolution; //往前走
                 break;
-            case 'D':
+            case 'v':
                 y += this.resolution; //往下走
                 break;
-            case 'L':
+            case '<':
                 x -= this.resolution; //往左走
                 break;
-            case 'R':
+            case '>':
                 x += this.resolution; //往右走
                 break;
         }
@@ -351,229 +333,5 @@ class Dodger {
             .attr('style', `stroke-width: ${(oldCoord.x !== newCoord.x && newCoord.y === oldCoord.y &&
                 newCoord.y === Number(svg.style('height').substring(0, 3))) ? 10 : 3}px; ` +
                 'stroke: rgb(248, 18, 18); shape-rendering: crispEdges;');
-    }
-
-    _containEnd(maze) {
-        for (const row of maze) {
-            for (const symbol of row) {
-                if (symbol === 'X') {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    _setEndCoordinate(maze, cx, cy, resolution) {
-        let isFindEnd = false;
-
-        if (Number(this.end.attr('cx')) <= cx) {
-            for (const [j, row] of maze.entries()) {
-                for (const [i, symbol] of row.entries()) {
-                    const symbolX = cx - (Math.floor(maze[0].length / 2) * resolution) + (resolution * i);
-                    if (symbolX > cx) break;
-
-                    if (symbol === ' ') {
-                        maze[j][i] = 'X';
-                        break;
-                    }
-                }
-
-                if (maze[j].indexOf('X') >= 0) {
-                    isFindEnd = true;
-                    break;
-                }
-            }
-
-            if (!isFindEnd) {
-                for (const [j, row] of maze.entries()) {
-                    for (const [i, symbol] of row.entries()) {
-                        const symbolX = cx - (Math.floor(maze[0].length / 2) * resolution) + (resolution * i);
-                        if (symbolX <= cx) continue;
-
-                        if (symbol === ' ') {
-                            maze[j][i] = 'X';
-                            break;
-                        }
-                    }
-                }
-            }
-        } else {
-            for (const [j, row] of maze.entries()) {
-                for (const [i, symbol] of row.entries()) {
-                    const symbolX = cx - (Math.floor(maze[0].length / 2) * resolution) + (resolution * i);
-                    if (symbolX <= cx) continue;
-
-                    if (symbol === ' ') {
-                        maze[j][i] = 'X';
-                        break;
-                    }
-                }
-
-                if (maze[j].indexOf('X') >= 0) {
-                    isFindEnd = true;
-                    break;
-                }
-            }
-
-            if (!isFindEnd) {
-                for (const [j, row] of maze.entries()) {
-                    for (const [i, symbol] of row.entries()) {
-                        const symbolX = cx - (Math.floor(maze[0].length / 2) * resolution) + (resolution * i);
-                        if (symbolX > cx) break;
-
-                        if (symbol === ' ') {
-                            maze[j][i] = 'X';
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return maze;
-    }
-}
-
-class PathPlanner {
-    constructor(maze) {
-        this.seq = new Queue();
-        this.seq.put('');
-        this.maze = maze;
-        this.directions = '';
-    }
-
-    calculate() {
-        let s = '';
-        while (!this.end(s)) {
-            s = this.seq.pop();
-            for (const direction of ['L', 'R', 'U', 'D']) {
-                const data = s + direction;
-                if (this.validate(data)) {
-                    this.seq.put(data);
-                }
-            }
-        }
-    }
-
-    end(directions) {
-        const maze = this.maze;
-        const len = maze.length;
-        let start = 0;
-
-        maze[len - 1].forEach((symbol, i) => {
-            if (symbol === 'O') {
-                start = i;
-                return false;
-            }
-        });
-
-        let x = start,
-            y = len - 1;
-        for (const direction of directions) {
-            if (direction === 'L')
-                x -= 1;
-            else if (direction === 'R')
-                x += 1;
-            else if (direction === 'U')
-                y -= 1;
-            else if (direction === 'D')
-                y += 1;
-        }
-
-        if (maze[y][x] === 'X') {
-            console.log('Found: ' + directions);
-            this.directions = directions;
-            return true;
-        }
-        return false;
-    }
-
-    validate(directions) {
-        const maze = this.maze;
-        const len = maze.length;
-        let start = 0;
-
-        maze[len - 1].forEach((symbol, i) => {
-            if (symbol === 'O') {
-                start = i;
-                return false;
-            }
-        });
-
-        let x = start,
-            y = len - 1;
-        for (const direction of directions) {
-            if (direction === 'L')
-                x -= 1;
-            else if (direction === 'R')
-                x += 1;
-            else if (direction === 'U')
-                y -= 1;
-            else if (direction === 'D')
-                y += 1;
-
-            if (!((0 <= x && x < maze[0].length) && (0 <= y && y < len)))
-                return false;
-            else if (maze[y][x] === '#')
-                return false;
-        }
-
-        return true;
-    }
-
-    print_maze() {
-        const maze = this.maze;
-        const len = maze.length;
-        let start = 0;
-
-        maze[len - 1].forEach((symbol, i) => {
-            if (symbol === 'O') {
-                start = i;
-                return false;
-            }
-        });
-
-        let x = start,
-            y = len - 1;
-        const sequence = new Set();
-        for (const direction of this.directions) {
-            if (direction === 'L')
-                x -= 1;
-            else if (direction === 'R')
-                x += 1;
-            else if (direction === 'U')
-                y -= 1;
-            else if (direction === 'D')
-                y += 1;
-
-            sequence.add([y, x].toString());
-        }
-
-        let result = '';
-        for (const [y, row] of maze.entries()) {
-            for (const [x, col] of row.entries()) {
-                if (sequence.has([y, x].toString()))
-                    result += '+ ';
-                else
-                    result += col + ' ';
-            }
-            result += '\r\n';
-        }
-        console.log(result);
-    }
-}
-
-class Queue {
-    constructor() {
-        this.queue = [];
-    }
-
-    put(val) {
-        this.queue.unshift(val);
-    }
-
-    pop() {
-        return this.queue.pop();
     }
 }
