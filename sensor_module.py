@@ -249,7 +249,7 @@ class EmergencyButton(Thread):
         while GPIO.input(self.BUTTON_PIN) == 0:
             timer.stop()
 
-        if timer.elapsed_time >= 2:
+        if timer.elapsed_time >= 1:
             content = self._service.speech
             self._service.push_notification(f'緊急狀況: {content}')
         else:
