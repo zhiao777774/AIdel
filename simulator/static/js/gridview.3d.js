@@ -63,6 +63,10 @@ class GridView3D {
     generate(model) {
         console.log(model);
         if (this.lock) return;
+        if (this.useFile) {
+            this.#data = [];
+            this.useFile = false;
+        }
 
         this.height = 180;
         this.width = 90;
@@ -145,6 +149,53 @@ class GridView3D {
         });
     }
 
+    readFile(model) {
+        console.log(model);
+        this.lock = true;
+
+        this.height = 180;
+        this.width = 90;
+        this.resolution = 15;
+
+        this.layout.scene.xaxis = {
+            nticks: this.resolution,
+            range: [this.width, 0]
+        };
+
+        this.layout.scene.yaxis = {
+            nticks: this.resolution,
+            range: [0, this.height]
+        };
+
+        this.#data = [];
+
+        Object.keys(model).forEach((n, i) => {
+            const userX = this.width / 2,
+                userY = this.height - this.resolution * i;
+            const item = {
+                name: n,
+                text: n,
+                x: [userX], y: [userY], z: [0],
+                hoverinfo: 'text',
+                mode: 'markers',
+                marker: { size: 10 },
+                type: 'scatter3d'
+            };
+
+            model[n].forEach(({ x, y }) => {
+                item.x.push(x);
+                item.y.push(y);
+                item.z.push(0);
+            });
+            this.#data.push(item);
+        });
+
+        console.log(this.#data);
+        Plotly.newPlot('model-3d', this.#data, this.layout);
+
+        this.useFile = true;
+    }
+
     _writeResult() {
         const $body = $('#model-result-div div.card-body');
         const index = this.#data
@@ -163,8 +214,8 @@ class GridView3D {
                 </thead>
                 <tbody>
                     ${
-                        this.#data[index].obj.map(({ x, y, clsName, angle, distance }) =>
-                            `
+            this.#data[index].obj.map(({ x, y, clsName, angle, distance }) =>
+                `
                                 <tr>
                                     <th scope="row">${clsName}</th>
                                     <td>${x}</td>
@@ -173,7 +224,7 @@ class GridView3D {
                                     <td>${distance}</td>
                                 </tr>
                             `)
-                        }
+            }
                 </tbody>
             </table>
             <!--img id='model-img-T${this.step}'-->
@@ -191,12 +242,12 @@ class GridView3D {
             `);
         }
 
-        $body.animate({ 
-            scrollTop: $(`#model-T${this.step}`).offset().top 
+        $body.animate({
+            scrollTop: $(`#model-T${this.step}`).offset().top
         }, 800);
 
-        socketEmit('writeEnvironmentalModel', 
-            this.#data.map(({obj}) => obj));
+        socketEmit('writeEnvironmentalModel',
+            this.#data.map(({ obj }) => obj));
     }
 }
 

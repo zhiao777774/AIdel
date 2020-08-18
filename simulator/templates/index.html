@@ -52,12 +52,12 @@
                     <span>
                         <label id='position'></label>
                     </span>
+                    <a id='btnFileUpload' class='btn btn-sm btn-info' href='fileUpload'>上傳文件</a>
                     {% if model_file_name %}
                     <span>
                         <label class='model-file-name'>{{ model_file_name }}</label>
                     </span>
                     {% endif %}
-                    <a id='btnFileUpload' class='btn btn-sm btn-info' href='fileUpload'>上傳文件</a>
                 </div>
                 <div class='card-body scrollbar'>
                     <h4 class='warn-text'>目前socket沒有連線</h4>
@@ -132,9 +132,10 @@
         return str;
     }
 
-    const modelFile = JSON.parse(decode('{{ model_file_content }}'));
+    let modelFile = '{{ model_file_content }}';
     if (modelFile) {
-        console.log(modelFile);
+        modelFile = JSON.parse(decode(modelFile));
+        gridview3d.readFile(modelFile);
     }
 </script>
 
