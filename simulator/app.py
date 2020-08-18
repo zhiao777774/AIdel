@@ -1,14 +1,20 @@
-import pathlib
 import json
+import requests
+import pathlib
+import logging
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_socketio import SocketIO
 from flask_cors import CORS
-from api.dodger import Dodger, Maze, PathNotFoundError
+
+from api.dodger import Maze, Dodger, PathNotFoundError
 
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app)
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -16,7 +22,7 @@ def index():
     if request.method == 'POST':
         form = request.form
         return render_template('index.html',
-                               model_file_name=request.form['model_file_name'],
+                               model_file_name=form['model_file_name'],
                                model_file_content=form['model_file_content'])
     else:
         return render_template('index.html')
@@ -53,6 +59,38 @@ def calc_path():
     return jsonify(res)
 
 
+@app.route('/latlngQueryAddress', methods=['POST'])
+def latlng_query_addr():
+    req_data = request.get_json()
+
+    service_url = 'https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr'
+    params = {
+        'oAPPId': 'yplbHN5BJuiEf7LgSExdqxgq7sWsC3ixOinIiChGRbQPLvpGMD+gJQ==',
+        'oAPIKey': 'cGEErDNy5yN/1fQ0vyTOZrghjE+jIU6upB/qBs9aoOxKqAeB/zLieVBCYS2k8BuE+UTfAliTTUmvPT61TZIiQctLbnoWpQmk8Kv4M2DcPjcUNM7zNCrPglb3vGflAyMzHtGKvQW/aEsVPTs0tJubkV8qAYvr9w07TvNuV4hrT0fegvck5L12WfaVeDMjXBxu9fpErze+e/aYi5Sk+qeJwQrdYN6tBZ/n2m5jKGpEiX7Zk5sOLGsf1n8JEgOAtb/W9MVMxNsFUw6XzzxWrsuf+6x0iqdULd1pRnaBzBXeag4/WyYxiUSmulD9jxeGC8Ll7uttC6pgt57NJAsWt2VKn0+ypkNF9Cf+',
+        'oPX': req_data['lng'],
+        'oPY': req_data['lat'],
+        'oBuffer': req_data['buffer'],
+        'oSRS': 'EPSG:4326',
+        'oResultDataType': 'JSON'
+    }
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    response = requests.get(service_url, params=params, headers=headers)
+    address = ''
+    if response.status_code == 200:
+        res = response.json()
+        total = res['Info']['Total']
+
+        if total > 0:
+            address = res['AddressList'][0]['FULL_ADDR']
+
+    return jsonify({
+        'result': address
+    })
+
+
 @app.route('/modelFileUpload', methods=['GET', 'POST'])
 def model_file_upload():
     if request.method == 'POST':
@@ -66,9 +104,10 @@ def model_file_upload():
 
     content = {}
     for data in file_content.split('\r\n\r\n'):
+        if not data:
+            continue
+
         data = data.split('\r\n')
-        if not data: continue
-        
         n = str(data[0])
         content[n] = []
         for item in data[3:]:
