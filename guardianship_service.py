@@ -151,27 +151,16 @@ class GuardianshipService(Thread):
 
 
 def latlng_query_addr(lat, lng, buffer=150):
-    service_url = 'https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr'
-    params = {
-        'oAPPId': 'yplbHN5BJuiEf7LgSExdqxgq7sWsC3ixOinIiChGRbQPLvpGMD+gJQ==',
-        'oAPIKey': 'cGEErDNy5yN/1fQ0vyTOZrghjE+jIU6upB/qBs9aoOxKqAeB/zLieVBCYS2k8BuE+UTfAliTTUmvPT61TZIiQctLbnoWpQmk8Kv4M2DcPjcUNM7zNCrPglb3vGflAyMzHtGKvQW/aEsVPTs0tJubkV8qAYvr9w07TvNuV4hrT0fegvck5L12WfaVeDMjXBxu9fpErze+e/aYi5Sk+qeJwQrdYN6tBZ/n2m5jKGpEiX7Zk5sOLGsf1n8JEgOAtb/W9MVMxNsFUw6XzzxWrsuf+6x0iqdULd1pRnaBzBXeag4/WyYxiUSmulD9jxeGC8Ll7uttC6pgt57NJAsWt2VKn0+ypkNF9Cf+',
-        'oPX': lng, 
-        'oPY': lat, 
-        'oBuffer': buffer,
-        'oSRS': 'EPSG:4326',
-        'oResultDataType': 'JSON'
-    }
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
+    service_url = 'http://120.125.83.10:8090/latlngQueryAddress'
+    post_data = {
+        'lat': lat,
+        'lng': lng, 
+        'buffer': buffer,
     }
 
-    response = requests.get(service_url, params = params, headers = headers)
+    response = requests.post(service_url, json = post_data)
     address = ''
     if response.status_code == 200:
-        res = response.json()
-        total = res['Info']['Total']
-
-        if total > 0:
-            address = res['AddressList'][0]['FULL_ADDR']
+        address = response.json()['result']
 
     return address
