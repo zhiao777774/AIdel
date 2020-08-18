@@ -150,7 +150,7 @@ class GuardianshipService(Thread):
                 timer.stop()
 
 
-def latlng_query_addr(lat, lng, buffer=100):
+def latlng_query_addr(lat, lng, buffer=150):
     service_url = 'https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr'
     params = {
         'oAPPId': 'yplbHN5BJuiEf7LgSExdqxgq7sWsC3ixOinIiChGRbQPLvpGMD+gJQ==',
