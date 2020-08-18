@@ -1,4 +1,5 @@
 import pathlib
+import json
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -10,9 +11,15 @@ CORS(app)
 socketio = SocketIO(app)
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    if request.method == 'POST':
+        form = request.form
+        return render_template('index.html',
+                               model_file_name=request.form['model_file_name'],
+                               model_file_content=form['model_file_content'])
+    else:
+        return render_template('index.html')
 
 
 @app.route('/fileUpload')
@@ -54,17 +61,42 @@ def model_file_upload():
         model_file = request.args.get('input-model-file')
 
     file_name = model_file.filename
-    content = model_file.read()
+    file_content = model_file.read()
+    file_content = file_content.decode('UTF-8')
 
-    print(f'file content: {content}')
-    print(f'file name: {file_name}')
+    content = {}
+    for data in file_content.split('\r\n\r\n'):
+        data = data.split('\r\n')
+        if not data: continue
+        
+        n = str(data[0])
+        content[n] = []
+        for item in data[3:]:
+            cls_name, x, y, angle, distance = item.split('   ')
 
-    return redirect(url_for('index'))
+            content[n].append({
+                'class': str(cls_name),
+                'x': str(x),
+                'y': str(y),
+                'angle': str(angle),
+                'distance': str(distance)
+            })
+
+    return jsonify({
+        'model_file_name': file_name,
+        'model_file_content': json.dumps(content)
+    })
+
+    # return redirect(url_for('index',
+    #                         model_file_name=file_name,
+    #                         model_file_content=content), code=307)
+
 
 @ socketio.on('receiveEnvironmentalModel')
 def receive_environmental_model(model):
     print('Environmental model received.')
     socketio.emit('environmentalModel', model)
+
 
 @ socketio.on('writeEnvironmentalModel')
 def write_environmental_model(data):
@@ -89,13 +121,16 @@ def write_environmental_model(data):
 
             f.write('\n')
 
+
 @ socketio.on('connect')
 def socket_connect():
     print(f'socket connect id: {request.sid}')
 
+
 @ socketio.on('disconnect')
 def socket_disconnect():
     print(f'socket disconnect id: {request.sid}')
+
 
 if __name__ == '__main__':
     host = '120.125.83.10'
