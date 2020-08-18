@@ -124,3 +124,14 @@ nav .disabled.title {
     position: sticky;
     right: 0;
 }
+
+.model-file-name {
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+@media (max-width: 900px) {
+    #model-3d {
+        width: auto;
+    }
+}
