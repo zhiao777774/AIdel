@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset='UTF-8'>
     <meta name='google' content='notranslate'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <script src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
@@ -13,7 +13,7 @@
         integrity='sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB' crossorigin='anonymous'>
     <link href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.0.9/css/fileinput.min.css' media='all'
         rel='stylesheet' />
-    <link rel='stylesheet' href='{{ url_for('static', filename="css/glyphicon.css") }}'>
+    <link rel='stylesheet' href='{{ url_for('static', filename='css/glyphicon.css') }}'>
     <title>AIdel file upload</title>
 </head>
 
@@ -28,6 +28,19 @@
             maxFileCount: 1,
             enctype: 'multipart/form-data',
             uploadUrl: '/modelFileUpload'
+        });
+
+        $('#input-model-file').on('fileuploaded', (event, data) => {
+            data = data.jqXHR.responseJSON;
+            if (data) {
+                $('body').append(`
+                    <form action='/' method='post' name='redirect_index' style='display: none;'>
+                        <input type='text' name='model_file_name' value='${data.model_file_name}' />
+                        <input type='text' name='model_file_content' value='${data.model_file_content}' />
+                    </form>
+                `);
+                document.forms['redirect_index'].submit();
+            }
         });
     </script>
 </body>
