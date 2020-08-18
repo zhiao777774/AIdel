@@ -183,7 +183,7 @@ function simulate(count) {
     console.log(maze);
     $.ajax({
         type: 'POST',
-        url: 'http://120.125.83.10:8091/calculatePath',
+        url: '/calculatePath',
         dataType: 'JSON',
         data: JSON.stringify({ maze }),
         headers: {
