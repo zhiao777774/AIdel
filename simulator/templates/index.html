@@ -1,59 +1,59 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 
 <head>
-    <meta charset='UTF-8'>
-    <meta name='google' content='notranslate'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <script src='https://code.jquery.com/jquery-3.4.1.min.js'></script>
-    <script src='https://d3js.org/d3.v5.min.js'></script>
-    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js'></script>
-    <script src='{{ url_for('static', filename='js/gridview.js') }}'></script>
-    <script src='{{ url_for('static', filename='js/gridview.3d.js') }}'></script>
-    <script src='{{ url_for('static', filename='js/info.division.js') }}'></script>
-    <script src='{{ url_for('static', filename='js/socket.handler.js') }}'></script>
-    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css'
-        integrity='sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB' crossorigin='anonymous'>
-    <link rel='stylesheet' href='{{ url_for('static', filename='css/global.css') }}'>
-    <link rel='stylesheet' href='{{ url_for('static', filename='css/gridview.css') }}'>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="{{ url_for("static", filename="js/gridview.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/gridview.3d.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/info.division.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/socket.handler.js") }}"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
+        integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/global.css") }}">
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/gridview.css") }}">
     <title>AIdel</title>
 </head>
 
-<body onload='initGridView(10)'>
+<body onload="initGridView(10)">
     <main>
-        <nav class='nav nav-pills nav-justified'>
-            <h2 class='nav-link disabled title'>AIdel</h2>
-            <a href='#' class='nav-link active'>避障模擬</a>
-            <a href='#' class='nav-link'>即時影像</a>
-            <a href='#' class='nav-link'>穿戴式裝置展示</a>
+        <nav class="nav nav-pills nav-justified">
+            <h2 class="nav-link disabled title">AIdel</h2>
+            <a href="#" class="nav-link active">避障模擬</a>
+            <a href="#" class="nav-link">即時影像</a>
+            <a href="#" class="nav-link">穿戴式裝置展示</a>
         </nav>
-        <div id='simulate-div'>
-            <div class='input-group'>
-                <input id='n-random' type='text' class='form-control' placeholder='請輸入生成數量' aria-label='請輸入生成數量'
-                    aria-describedby='btnRandom'>
-                <div class='input-group-append'>
-                    <button id='btnGenerate' class='btn btn-outline-secondary simulate'>生成障礙物</button>
-                    <button id='btnRandomGenerate' class='btn btn-outline-secondary simulate'>生成隨機數量障礙物</button>
-                    <button id='btnSimulate' class='btn btn-outline-secondary simulate'>開始模擬</button>
+        <div id="simulate-div" class="page">
+            <div class="input-group">
+                <input id="n-random" type="text" class="form-control" placeholder="請輸入生成數量" aria-label="請輸入生成數量"
+                    aria-describedby="btnRandom">
+                <div class="input-group-append">
+                    <button id="btnGenerate" class="btn btn-outline-secondary simulate">生成障礙物</button>
+                    <button id="btnRandomGenerate" class="btn btn-outline-secondary simulate">生成隨機數量障礙物</button>
+                    <button id="btnSimulate" class="btn btn-outline-secondary simulate">開始模擬</button>
                 </div>
             </div>
-            <div id='info-div'>
-                <div class='card-header'></div>
-                <div class='card-body scrollbar'></div>
+            <div id="info-div">
+                <div class="card-header"></div>
+                <div class="card-body scrollbar"></div>
             </div>
         </div>
-        <div id='model-div' style='display: none;'>
-            <div id='model-result-div'>
-                <div class='card-header'>
-                    <h3 style='font-weight: bold; display: inline;'>資訊欄</h3>
-                    <a id='btnFileUpload' class='btn btn-sm btn-info' href='fileUpload'>上傳文件</a>
-                    <button id='btnToggleReceive' class='btn btn-xs btn-primary'>暫停接收</button>
-                    <button id='btnChangePosition' class='btn btn-xs btn-danger'>變換位置</button>
-                    <label id='position'></label>
+        <div id="model-div" class="page">
+            <div id="model-result-div">
+                <div class="card-header">
+                    <h3 style="font-weight: bold; display: inline;">資訊欄</h3>
+                    <a id="btnFileUpload" class="btn btn-sm btn-info" href="fileUpload">上傳文件</a>
+                    <button id="btnToggleReceive" class="btn btn-xs btn-primary">暫停接收</button>
+                    <button id="btnChangePosition" class="btn btn-xs btn-danger">變換位置</button>
+                    <label id="position"></label>
                 </div>
-                <div class='card-body scrollbar'>
-                    <h4 class='warn-text'>
+                <div class="card-body scrollbar">
+                    <h4 class="warn-text">
                         {% if model_file_name %}
                         目前socket沒有連線 / socket接收已禁用
                         {% else %}
@@ -63,19 +63,19 @@
                 </div>
             </div>
             {% if model_file_name %}
-            <div id='model-file-div'>
-                <div class='card-header'>
+            <div id="model-file-div">
+                <div class="card-header">
                     <span>
-                        <img src="{{ url_for('static', filename='assets/arrow-right.png') }}" alt="點擊可將資訊欄隱藏">
+                        <img src="{{ url_for("static", filename="assets/arrow-right.png") }}" alt="點擊可將資訊欄隱藏">
                         <h5>{{ model_file_name }}</h5>
                     </span>
                 </div>
-                <div class='card-body scrollbar'></div>
+                <div class="card-body scrollbar"></div>
             </div>
             {% endif %}
-            <div id='model-3d'></div>
+            <div id="model-3d"></div>
         </div>
-        <div id='equipment-div' style='display: none;'></div>
+        <div id="equipment-div" class="page"></div>
     </main>
 </body>
 <script>
@@ -89,6 +89,7 @@
         currentPage = $(this).index();
         $('main > ' + `div:nth-of-type(${currentPage})`).show();
     });
+    $('nav a.nav-link:nth-of-type(1)').click();
 
     $('#n-random').keyup((e) => {
         e = e.target;
@@ -146,6 +147,7 @@
     if (modelFile) {
         modelFile = JSON.parse(decode(modelFile));
         gridview3d.readFile(modelFile);
+        $('nav a.nav-link:nth-of-type(2)').click();
     }
 </script>
 
