@@ -13,6 +13,7 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app)
 
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
