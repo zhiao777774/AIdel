@@ -51,6 +51,7 @@ class GridView3D {
     }
 
     initialize() {
+        this.#data = [];
         Plotly.newPlot('model-3d', [{
             x: [45], y: [180], z: [0],
             hoverinfo: 'text',
@@ -63,10 +64,6 @@ class GridView3D {
     generate(model) {
         console.log(model);
         if (this.lock) return;
-        if (this.useFile) {
-            this.#data = [];
-            this.useFile = false;
-        }
 
         this.height = 180;
         this.width = 90;
@@ -151,7 +148,6 @@ class GridView3D {
 
     readFile(model) {
         console.log(model);
-        this.lock = true;
 
         this.height = 180;
         this.width = 90;
@@ -168,6 +164,8 @@ class GridView3D {
         };
 
         this.#data = [];
+
+        const $body = $('#model-file-div div.card-body');
 
         Object.keys(model).forEach((n, i) => {
             const userX = this.width / 2,
@@ -188,6 +186,41 @@ class GridView3D {
                 item.z.push(0);
             });
             this.#data.push(item);
+
+            const content = `
+                <h5 style='font-weight: bold;'>${n}</h5>
+                <table class="table" style="width: 450px;">
+                    <thead>
+                        <tr>
+                            <th scope="col">class</th>
+                            <th scope="col">x</th>
+                            <th scope="col">y</th>
+                            <th scope="col">angle</th>
+                            <th scope="col">distance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${
+                model[n].map(({ x, y, class: clsName, angle, distance }) =>
+                    `
+                                    <tr>
+                                        <th scope="row">${clsName}</th>
+                                        <td>${x}</td>
+                                        <td>${y}</td>
+                                        <td>${angle}</td>
+                                        <td>${distance}</td>
+                                    </tr>
+                                `)
+                }
+                    </tbody>
+                </table>
+            `;
+
+            $body.append(`
+                <div id="model-file-${n}">
+                    ${content}
+                </div>
+            `);
         });
 
         console.log(this.#data);
@@ -259,11 +292,23 @@ $(function () {
         if ($(this).text() === '暫停接收') {
             gridview3d.lock = true;
             $(this).text('啟用接收');
+            $('.warn-text').text('目前socket沒有連線 / socket接收已禁用');
         } else {
             gridview3d.lock = false;
             $(this).text('暫停接收');
+            $('.warn-text').text('目前socket沒有連線');
+
+            if (gridview3d.useFile) {
+                gridview3d.useFile = false;
+                gridview3d.initialize();
+                $('#model-file-div').hide();
+            }
         }
     });
+
+    if (gridview3d.useFile) {
+        $('#btnToggleReceive').click();
+    }
 
     $('#btnChangePosition').click(() => {
         gridview3d.step++;
@@ -273,4 +318,25 @@ $(function () {
     });
 
     $('#position').text(`T${gridview3d.step}`);
+
+    const fileDivWidth = {
+        max: 'calc(100vw - 1020px)',
+        min: '20px'
+    };
+    $('#model-file-div').click(function () {
+        if ($(this).width() <= 20) {
+            $('#model-file-div').width(fileDivWidth.max)
+                .css('cursor', '');
+        }
+    });
+
+    $('#model-file-div .card-header img').click(() => {
+        $('#model-file-div').width(fileDivWidth[
+            $('#model-file-div').width() <= 20 ? 'max' : 'min'
+        ]).css('cursor', 'pointer');
+
+        if ($('#model-file-div').width() <= 20) {
+            $('#model-file-div').css('cursor', 'pointer');
+        }
+    });
 });

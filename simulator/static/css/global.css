@@ -85,7 +85,8 @@ nav .disabled.title {
     margin-bottom: 200px;
 }
 
-#model-result-div .card-body.scrollbar {
+#model-result-div .card-body.scrollbar,
+#model-file-div .card-body.scrollbar {
     height: 600px;
 }
 
@@ -120,14 +121,34 @@ nav .disabled.title {
     font-size: 25px;
 }
 
-#btnFileUpload {
-    position: sticky;
+#model-file-div {
+    width: calc(100vw - 1020px);
+    height: 100%;
+    position: fixed;
     right: 0;
+    transition: 0.7s;
+    z-index: 10;
+    background: white;
+    border: 1.1px solid rgba(0, 0, 0, .3);
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
 }
 
-.model-file-name {
+#model-file-div .card-header span img {
+    width: 20px;
+    height: 20px;
+    padding-bottom: 3px;
+    cursor: pointer;
+}
+
+#model-file-div .card-header span h5 {
+    display: inline;
     font-weight: bold;
-    margin-left: 5px;
+    margin-left: 15px;
+}
+
+#model-file-div .card-body {
+    padding: 20px;
 }
 
 @media (max-width: 900px) {

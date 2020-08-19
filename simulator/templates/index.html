@@ -47,22 +47,32 @@
             <div id='model-result-div'>
                 <div class='card-header'>
                     <h3 style='font-weight: bold; display: inline;'>資訊欄</h3>
+                    <a id='btnFileUpload' class='btn btn-sm btn-info' href='fileUpload'>上傳文件</a>
                     <button id='btnToggleReceive' class='btn btn-xs btn-primary'>暫停接收</button>
                     <button id='btnChangePosition' class='btn btn-xs btn-danger'>變換位置</button>
-                    <span>
-                        <label id='position'></label>
-                    </span>
-                    <a id='btnFileUpload' class='btn btn-sm btn-info' href='fileUpload'>上傳文件</a>
-                    {% if model_file_name %}
-                    <span>
-                        <label class='model-file-name'>{{ model_file_name }}</label>
-                    </span>
-                    {% endif %}
+                    <label id='position'></label>
                 </div>
                 <div class='card-body scrollbar'>
-                    <h4 class='warn-text'>目前socket沒有連線</h4>
+                    <h4 class='warn-text'>
+                        {% if model_file_name %}
+                        目前socket沒有連線 / socket接收已禁用
+                        {% else %}
+                        目前socket沒有連線
+                        {% endif %}
+                    </h4>
                 </div>
             </div>
+            {% if model_file_name %}
+            <div id='model-file-div'>
+                <div class='card-header'>
+                    <span>
+                        <img src="{{ url_for('static', filename='assets/arrow-right.png') }}" alt="點擊可將資訊欄隱藏">
+                        <h5>{{ model_file_name }}</h5>
+                    </span>
+                </div>
+                <div class='card-body scrollbar'></div>
+            </div>
+            {% endif %}
             <div id='model-3d'></div>
         </div>
         <div id='equipment-div' style='display: none;'></div>
