@@ -110,7 +110,7 @@ def _enable_sensors():
         HCSR04(trigger_pin=23, echo_pin=24),
         # GPS(port='/dev/ttyAMA0'),
         MPU6050(),
-        # EmergencyButton(button_pin=31, 
+        # EmergencyButton(button_pin=16, 
         #   service=_DICT_SERVICE['GuardianshipService'])
     ]
 
