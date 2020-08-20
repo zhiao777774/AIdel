@@ -69,7 +69,7 @@ def calc_path():
 def latlng_query_addr():
     req_data = request.get_json()
 
-    service_url = 'https://addr.tgos.tw/addrws/v40/GeoQueryAddr.asmx/PointQueryAddr'
+    service_url = 'https://addr.tgos.tw/addrws/v30/GeoQueryAddr.asmx/PointQueryAddr'
     params = {
         'oAPPId': 'yplbHN5BJuiEf7LgSExdqxgq7sWsC3ixOinIiChGRbQPLvpGMD+gJQ==',
         'oAPIKey': 'cGEErDNy5yN/1fQ0vyTOZrghjE+jIU6upB/qBs9aoOxKqAeB/zLieVBCYS2k8BuE+UTfAliTTUmvPT61TZIiQctLbnoWpQmk8Kv4M2DcPjcUNM7zNCrPglb3vGflAyMzHtGKvQW/aEsVPTs0tJubkV8qAYvr9w07TvNuV4hrT0fegvck5L12WfaVeDMjXBxu9fpErze+e/aYi5Sk+qeJwQrdYN6tBZ/n2m5jKGpEiX7Zk5sOLGsf1n8JEgOAtb/W9MVMxNsFUw6XzzxWrsuf+6x0iqdULd1pRnaBzBXeag4/WyYxiUSmulD9jxeGC8Ll7uttC6pgt57NJAsWt2VKn0+ypkNF9Cf+',
