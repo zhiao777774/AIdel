@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='google' content='notranslate'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<script src="{{ url_for("static", filename="js/bundle.3d.js") }}"></script>
+	<link rel="stylesheet" href="{{ url_for("static", filename="css/equipment.3d.css") }}">
+	<title>AIdel equipment3D model</title>
+</head>
+
+<body>
+	<div class="slidershow middle">
+		<div class="slides">
+			<input type="radio" name="r" id="r1" checked>
+			<input type="radio" name="r" id="r2">
+			<div class="slide s1">
+				<span data-diagram="inside-structure"></span>
+			</div>
+			<div class="slide">
+				<span data-diagram="man-camera"></span>
+			</div>
+		</div>
+		<div class="navigation">
+			<label for="r1" class="bar"></label>
+			<label for="r2" class="bar"></label>
+		</div>
+	</div>
+</body>
+
+</html>

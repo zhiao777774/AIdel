@@ -66,7 +66,7 @@
             <div id="model-file-div">
                 <div class="card-header">
                     <span>
-                        <img src="{{ url_for("static", filename="assets/arrow-right.png") }}" alt="點擊可將資訊欄隱藏">
+                        <img src="{{ url_for("static", filename="assets/img/arrow-right.png") }}" alt="點擊可將資訊欄隱藏">
                         <h5>{{ model_file_name }}</h5>
                     </span>
                 </div>
@@ -75,7 +75,9 @@
             {% endif %}
             <div id="model-3d"></div>
         </div>
-        <div id="equipment-div" class="page"></div>
+        <div id="equipment-div" class="page">
+            <iframe src="equipment3D" style="width: 100vw; height: 90vh;"></iframe>
+        </div>
     </main>
 </body>
 <script>

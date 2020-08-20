@@ -34,6 +34,11 @@ def fileUpload():
     return render_template('file_upload.html')
 
 
+@app.route('/equipment3D')
+def equipment3D():
+    return render_template('equipment_3d.html')
+
+
 @app.route('/calculatePath', methods=['POST'])
 def calc_path():
     req_data = request.get_json()
