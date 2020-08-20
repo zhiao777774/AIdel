@@ -30,10 +30,12 @@ class ServiceType(Enum):
 
     @classmethod
     def get_service(cls, service):
+        GMAPS_KEY = 'AIzaSyC0NXEeivr01yTkj3vOcEXUFYJwvv32bMU'
+
         return {
-            cls.SEARCH.value: '',  # GoogleService(),
-            cls.WHETHER.value: '',  # GoogleService(),
-            cls.NAVIGATION.value: ''  # GoogleService()
+            cls.SEARCH.value: '', # GoogleService(GMAPS_KEY),
+            cls.WHETHER.value: GoogleService(GMAPS_KEY),
+            cls.NAVIGATION.value: GoogleService(GMAPS_KEY)
         }.get(service)
 
 
@@ -77,7 +79,7 @@ class SpeechService(Thread):
             keywords = self.filter_keywords(keywords)
             service, place = self.finds(keywords, service.value)
 
-            # ServiceType.get_service(service).execute(place)
+            ServiceType.get_service(service).execute(service, place)
 
     def voice2text(self):
         audio = None
@@ -250,14 +252,14 @@ class GoogleService():
                                           type = type_)
         return radarResults['results']
 
-    def places_radar(self, lat, lng, type_, radius = 150):
+    def places_radar(self, latlng, type_, radius = 150):
         service_url = 'https://maps.googleapis.com/maps/api/place/textsearch/'
         result_type = 'json'
         constructed_url = service_url + result_type
         params = {
             'key': self._gmaps_key,
             'query': type_,
-            'location': f'{lat},{lng}',
+            'location': ','.join(latlng),
             'radius': radius,
             'language': 'zh-TW'
         }
@@ -266,26 +268,60 @@ class GoogleService():
         results = []
         if response.status_code == 200:
             res = response.json()
-            next_page_token = res['next_page_token']
+            # next_page_token = res['next_page_token']
             res = res['results'][:5]
 
             if len(res) > 0:
-                for r in res:
-                    loc = r['geometry']['location']
+                for item in res:
+                    location = item['geometry']['location']
                     results.append({
-                        'name': r['name'],
-                        'address': r['formatted_address'],
-                        'latitude': loc['lat'],
-                        'longitude': loc['lng']
+                        'name': item['name'],
+                        'address': item['formatted_address'],
+                        'latitude': location['lat'],
+                        'longitude': location['lng']
                     })
                 
         return results
     
-    def navigate(self):
-        pass
+    def navigate(self, start, destination):
+        service_url = 'https://maps.googleapis.com/maps/api/directions/'
+        result_type = 'json'
+        constructed_url = service_url + result_type
+        params = {
+            'key': self._gmaps_key,
+            'origin': ','.join(start),
+            'destination': ','.join(destination),
+            'mode': 'walking',
+            'language': 'zh-TW'
+        }
 
-    def execute(self):
-        pass
+        response = requests.get(constructed_url, params=params)
+        directions = []
+        if response.status_code == 200:
+            res = response.json()
+            print(res)
+
+
+        return directions
+
+    def execute(self, service, type_):
+        lat = 0
+        lng = 0
+
+        if service == ServiceType.WHETHER.value:
+            return self.places_radar(latlng = (lat, lng), type_ = type_)
+        elif service == ServiceType.NAVIGATION.value:
+            neighborhoods = self.places_radar(latlng = (lat, lng), type_ = type_)
+
+            if neighborhoods:
+                neighborhood = neighborhoods[0]
+                start = (lat, lng)
+                destination = (neighborhood['latitude'], neighborhood['longitude'])
+                return self.navigate(start = start, destination = destination)
+            else:
+                return None
+        else:
+            return None
 
 
 if __name__ == '__main__':
