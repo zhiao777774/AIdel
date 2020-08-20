@@ -7,6 +7,7 @@ import pyaudio
 import speech_recognition as sr
 import jieba
 import jieba.analyse
+import googlemaps
 from pygame import mixer
 from threading import Thread
 from xml.etree import ElementTree
@@ -238,29 +239,54 @@ class Responser:
         while mixer.music.get_busy(): continue
 
 
-'''
-import googlemaps
-
-class GoogleService(AbstractService):
-    def __init__(self):
-        gmaps_key = ''
+class GoogleService():
+    def __init__(self, gmaps_key):
+        self._gmaps_key = gmaps_key
         self._gmaps = googlemaps.Client(key = gmaps_key)
-        
-    def positioning(self):
-        return ()
     
-    def places_radar(self, type_):
-        radarResults = self._gmaps.places_radar(location = self.positioning(), 
-                                          radius = 200, 
+    def places_nearby(self, latlng, type_, radius = 150):
+        radarResults = self._gmaps.places_nearby(location = latlng, 
+                                          radius = radius, 
                                           type = type_)
         return radarResults['results']
+
+    def places_radar(self, lat, lng, type_, radius = 150):
+        service_url = 'https://maps.googleapis.com/maps/api/place/textsearch/'
+        result_type = 'json'
+        constructed_url = service_url + result_type
+        params = {
+            'key': self._gmaps_key,
+            'query': type_,
+            'location': f'{lat},{lng}',
+            'radius': radius,
+            'language': 'zh-TW'
+        }
+
+        response = requests.get(constructed_url, params=params)
+        results = []
+        if response.status_code == 200:
+            res = response.json()
+            next_page_token = res['next_page_token']
+            res = res['results'][:5]
+
+            if len(res) > 0:
+                for r in res:
+                    loc = r['geometry']['location']
+                    results.append({
+                        'name': r['name'],
+                        'address': r['formatted_address'],
+                        'latitude': loc['lat'],
+                        'longitude': loc['lng']
+                    })
+                
+        return results
     
     def navigate(self):
         pass
 
     def execute(self):
         pass
-'''
+
 
 if __name__ == '__main__':
     while True:
