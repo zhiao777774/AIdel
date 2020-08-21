@@ -138,6 +138,10 @@ nav .disabled.title {
     border-bottom-left-radius: 15px;
 }
 
+#model-file-div .card-header {
+    background-color: rgb(7 8 226 / 3%);;
+}
+
 #model-file-div .card-header span img {
     width: 20px;
     height: 20px;
