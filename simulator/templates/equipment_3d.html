@@ -26,7 +26,24 @@
 			<label for="r2" class="bar"></label>
 		</div>
 	</div>
+	<div class="navigation diagram-title">
+		<label>裝置</label>
+		<label>裝置穿戴</label>
+	</div>
 	<script src="{{ url_for("static", filename="js/bundle.3d.js") }}"></script>
+	<script>
+		const children = document.getElementsByClassName(
+			'navigation diagram-title')[0].children;
+
+		for (let dom of document.getElementsByClassName('bar')) {
+			const index = [...dom.parentNode.children].indexOf(dom);
+			dom.addEventListener('click', () => {
+				for (let [i, child] of [...children].entries()) {
+					child.style.display = (i === index) ? 'block' : 'none';
+				}
+			});
+		}
+	</script>
 </body>
 
 </html>

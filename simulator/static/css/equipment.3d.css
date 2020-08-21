@@ -1,7 +1,9 @@
+@import url("https://fonts.googleapis.com/css?family=Noto+Sans+TC&display=swap");
+
 body {
     margin: 50;
     padding: 0;
-    background: #34495e;
+    background: #a6b0be;
 }
 
 .slidershow {
@@ -23,6 +25,20 @@ body {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
+}
+
+.diagram-title {
+    bottom: 60px;
+}
+
+.diagram-title > label {
+    font-size: 26px;
+    font-weight: bold;
+    font-family: 'Noto Sans TC', '微軟正黑體', sans-serif;
+}
+
+.diagram-title > label:not(:first-child) {
+    display: none;
 }
 
 .bar {
