@@ -1,4 +1,28 @@
-(function () { function r(e, n, t) { function o(i, f) { if (!n[i]) { if (!e[i]) { var c = "function" == typeof require && require; if (!f && c) return c(i, !0); if (u) return u(i, !0); var a = new Error("Cannot find module '" + i + "'"); throw a.code = "MODULE_NOT_FOUND", a } var p = n[i] = { exports: {} }; e[i][0].call(p.exports, function (r) { var n = e[i][1][r]; return o(n || r) }, p, p.exports, r, e, n, t) } return n[i].exports } for (var u = "function" == typeof require && require, i = 0; i < t.length; i++)o(t[i]); return o } return r })()({
+(function () {
+	function r(e, n, t) {
+		function o(i, f) {
+			if (!n[i]) {
+				if (!e[i]) {
+					var c = "function" == typeof require && require;
+					if (!f && c) return c(i, !0);
+					if (u) return u(i, !0);
+					var a = new Error("Cannot find module '" + i + "'");
+					throw a.code = "MODULE_NOT_FOUND", a
+				}
+				var p = n[i] = {
+					exports: {}
+				};
+				e[i][0].call(p.exports, function (r) {
+					var n = e[i][1][r]; return o(n || r)
+				}, p, p.exports, r, e, n, t);
+			}
+			return n[i].exports;
+		}
+		for (var u = "function" == typeof require && require, i = 0; i < t.length; i++) o(t[i]);
+		return o;
+	}
+	return r;
+})()({
 	1: [function (require, module, exports) {
 		const THREE = require('three');
 		const TrackballControls = require('three-trackballcontrols');
@@ -86,12 +110,12 @@
 						renderer.render(scene, camera);
 					};
 				},
-				'man-camera': (elem) => {
+				'wearing': (elem) => {
 					const loader = new GLTFLoader();
 					// Load a glTF resource
 					loader.load(
 						// resource URL
-						'http://120.125.83.10:8090/static/assets/3d/man-camera.glb',
+						'http://120.125.83.10:8090/static/assets/3d/wearing.glb',
 						// called when the resource is loaded
 						function (gltf) {
 							scene.add(gltf.scene);
