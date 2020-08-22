@@ -130,6 +130,7 @@ class GridView3D {
 
         const xCenter = (lb.x + rb.x) / 2;
         let y = this.rpi.y - distance;
+        y += this.resolution * (this.step - 1);
         y = Math.round(y * 100) / 100;
         const radius = angle * Math.PI / 180;
         let x = this.rpi.x + (xCenter > this.rpi.x ?
@@ -187,7 +188,7 @@ class GridView3D {
             });
             this.#data.push(item);
 
-            const content = `
+            let content = `
                 <h5 style='font-weight: bold;'>${n}</h5>
                 <table class="table" style="width: 450px;">
                     <thead>
@@ -215,6 +216,7 @@ class GridView3D {
                     </tbody>
                 </table>
             `;
+            content = content.replace(new RegExp(',', 'g'), '').trim();
 
             $body.append(`
                 <div id="model-file-${n}">
@@ -302,11 +304,13 @@ $(function () {
                 gridview3d.useFile = false;
                 gridview3d.initialize();
                 $('#model-file-div').hide();
+                $('#btnChangePosition').removeAttr('disabled');
             }
         }
     });
 
     if (gridview3d.useFile) {
+        $('#btnChangePosition').attr('disabled', true);
         $('#btnToggleReceive').click();
     }
 
@@ -314,7 +318,18 @@ $(function () {
         gridview3d.step++;
         gridview3d.lock = true;
         $('#position').text(`T${gridview3d.step}`);
-        setTimeout(() => gridview3d.lock = false, 3000);
+        $('#btnToggleReceive').attr('disabled', true);
+        if ($('#btnToggleReceive').text() === '暫停接收') {
+            $('#btnToggleReceive').click();
+        }
+
+        setTimeout(() => {
+            gridview3d.lock = false;
+            $('#btnToggleReceive').removeAttr('disabled');
+            if ($('#btnToggleReceive').text() === '啟用接收') {
+                $('#btnToggleReceive').click();
+            }
+        }, 3000);
     });
 
     $('#position').text(`T${gridview3d.step}`);
