@@ -106,7 +106,8 @@ class GridView3D {
         model.obstacles.forEach(({
             class: clsName, distance, angle, coordinate
         }) => this.insert({
-            scale: model.width / this.width,
+            xScale: model.width / this.width,
+            yScale: model.height / this.height,
             clsName, distance, angle, coordinate
         }));
 
@@ -121,12 +122,12 @@ class GridView3D {
         });*/
     }
 
-    insert({ scale, clsName, distance, angle, coordinate }) {
+    insert({ xScale, yScale, clsName, distance, angle, coordinate }) {
         const { lb, rb } = coordinate;
-        lb.x /= scale;
-        lb.y /= scale;
-        rb.x /= scale;
-        rb.y /= scale;
+        lb.x /= xScale;
+        lb.y /= yScale;
+        rb.x /= xScale;
+        rb.y /= yScale;
 
         const xCenter = (lb.x + rb.x) / 2;
         let y = this.rpi.y - distance;
@@ -298,9 +299,9 @@ class GridView2D {
             height: 180,
             width: 90,
             resolution: 15,
-            alertArea: 100,
+            alertArea: 95,
             scale: {
-                w: 8.8,
+                w: 8.9,
                 h: 3.6,
                 r: 3.6,
                 alert: (8.5 + 3.6) / 2
@@ -318,8 +319,9 @@ class GridView2D {
     }
 
     initialize() {
-        d3.select('#model-3d').select('svg').remove();
-        $('#model-3d > div#model-color-chart').remove();
+        this.#data = [];
+        $('#model-3d > svg').remove();
+        $('#model-3d').children('#model-color-chart').remove();
 
         const { width, height, resolution, style } = this.layout;
         const svg = d3.select('#model-3d').append('svg')
@@ -352,11 +354,13 @@ class GridView2D {
             .attr('font-weight', 'bold');
     }
 
-    generate() {
+    generate(model) {
         console.log(model);
         if (this.lock) return;
 
+        const self = this;
         const svg = d3.select('#model-grid');
+        const text = svg.select('text');
         const { width, height, resolution, scale } = this.layout;
 
         const index = this.#data.findIndex(({ name }) => name === `T${this.step}`);
@@ -378,11 +382,11 @@ class GridView2D {
             this.#data[index].y = [y];
             this.#data[index].r = [r];
             this.#data[index].obj = [];
+            $('#model-grid').children(`circle#rpi-T${self.step}`).remove();
         }
 
         const color = this.layout.color[`T${this.step}`];
         const style = `stroke-width: 2px; stroke: ${color}; fill: ${color};`;
-        const self = this;
 
         svg.append('circle')
             .attr('id', `rpi-T${this.step}`)
@@ -393,7 +397,6 @@ class GridView2D {
             .attr('cls', 'rpi')
             .attr('style', style);
 
-        svg.select('g').remove();
         svg.selectAll('circle')
             .on('mousemove', function () {
                 const target = d3.select(this);
@@ -410,12 +413,12 @@ class GridView2D {
                     const color = self.#data[
                         self.#data.findIndex(({ name }) => name === step)
                     ].color;
-                    const style = `stroke-width: 2px; stroke: black; fill: ${color};`;
                     svg.selectAll('circle').filter(function () {
                         return d3.select(this).attr('step') === step;
-                    }).attr('style', style);
+                    }).attr('style', `stroke-width: 2px; stroke: black; fill: ${color};`);
                 }
-            }).on('mouseout', function () {
+            })
+            .on('mouseout', function () {
                 text.attr('display', 'none');
 
                 const target = d3.select(this);
@@ -424,36 +427,37 @@ class GridView2D {
                     const color = self.#data[
                         self.#data.findIndex(({ name }) => name === step)
                     ].color;
-                    const style = `stroke-width: 2px; stroke: ${color}; fill: ${color};`;
                     svg.selectAll('circle').filter(function () {
                         return d3.select(this).attr('step') === step;
-                    }).attr('style', style);
+                    }).attr('style', `stroke-width: 2px; stroke: ${color}; fill: ${color};`);
                 }
             });
+
+        svg.select('g').remove();
         const ripples = svg.append('g');
-        svg.selectAll('circle')
-            .filter(function () {
-                const len = self.#data.length;
-                return this.id === `rpi-${self.#data[len - 1].name}`;
-            })
-            .each(_transition);
+        svg.selectAll('circle').filter(function () {
+            const len = self.#data.length;
+            return this.id === `rpi-${self.#data[len - 1].name}`;
+        }).each(_transition);
 
         model.obstacles.forEach(({
             class: clsName, distance, angle, coordinate
         }) => this.insert({
-            scale: model.width / width,
+            xScale: model.width / width * scale.w,
+            yScale: model.height / height * scale.h,
             clsName, distance, angle, coordinate
         }));
 
+        $('#model-grid').children(`circle[step="T${this.step}"]`).remove();
         svg.selectAll('circle').filter(function () {
             return !this.id && this.step === `T${self.step}`;
-        }).remove();
-
-        svg.data(this.#data[index].obj)
+        }).data(this.#data[
+            this.#data.findIndex(({ name }) => name === `T${this.step}`)
+        ].obj)
             .enter().append('circle')
-            .attr('cx', (d) => d.x * scale.w)
-            .attr('cy', (d) => d.y - resolution * scale.r)
-            .attr('r', (d) => d.r)
+            .attr('cx', (d) => d.x)
+            .attr('cy', (d) => d.y)
+            .attr('r', (d) => d.r || 4 * scale.r)
             .attr('step', `T${this.step}`)
             .attr('cls', (d) => d.clsName)
             .attr('style', style);
@@ -474,7 +478,7 @@ class GridView2D {
             </div>
         `);
 
-        $('#position').text(`T${this.step}(${x},${y})`);
+        $('#position').text(`T${this.step}(${Math.round(x)},${Math.round(y)})`);
 
         console.log(this.#data);
         this.#writeResult();
@@ -493,8 +497,8 @@ class GridView2D {
                 .attr('d', d3.arc()
                     .innerRadius(0)
                     .outerRadius(r)
-                    .startAngle(-Math.PI * 0.35)
-                    .endAngle(Math.PI * 0.35))
+                    .startAngle(-Math.PI * 0.32)
+                    .endAngle(Math.PI * 0.32))
                 .attr('opacity', .7)
                 .attr('fill-opacity', .4)
                 .attr('style', style)
@@ -504,8 +508,8 @@ class GridView2D {
                 .attr('d', d3.arc()
                     .innerRadius(0)
                     .outerRadius(self.layout.alertArea)
-                    .startAngle(-Math.PI * 0.35)
-                    .endAngle(Math.PI * 0.35)) //調整波紋大小
+                    .startAngle(-Math.PI * 0.32)
+                    .endAngle(Math.PI * 0.32)) //調整波紋大小
                 .attr('opacity', 0)
                 .remove();
 
@@ -514,16 +518,16 @@ class GridView2D {
         }
     }
 
-    insert({ scale, clsName, distance, angle, coordinate }) {
+    insert({ xScale, yScale, clsName, distance, angle, coordinate }) {
         const { lb, rb } = coordinate;
-        lb.x /= scale;
-        lb.y /= scale;
-        rb.x /= scale;
-        rb.y /= scale;
+        lb.x /= xScale;
+        lb.y /= yScale;
+        rb.x /= xScale;
+        rb.y /= yScale;
 
         const xCenter = (lb.x + rb.x) / 2;
         let y = this.rpi.y - distance;
-        y += this.resolution * (this.step - 1);
+        y += this.layout.resolution * (this.step - 1);
         y = Math.round(y * 100) / 100;
         const radius = angle * Math.PI / 180;
         let x = this.rpi.x + (xCenter > this.rpi.x ?
@@ -543,8 +547,6 @@ class GridView2D {
 
     readFile(model) {
         console.log(model);
-
-        this.#data = [];
         this.initialize();
 
         const self = this;
@@ -552,6 +554,20 @@ class GridView2D {
         const text = svg.select('text');
         const $body = $('#model-file-div div.card-body');
         const { width, height, resolution, scale } = this.layout;
+
+        if(model['Real']) {
+            model['Real'].forEach(({ x, y, r = 4 * scale.r, class: clsName }) => {
+                svg.append('circle')
+                    .attr('cx', x * scale.w)
+                    .attr('cy', y * scale.h)
+                    .attr('r', r)
+                    .attr('step', 'Real')
+                    .attr('cls', clsName)
+                    .attr('style', 'stroke-width: 2px; stroke: black; fill: black;');
+            });
+
+            delete model['Real'];
+        }
 
         Object.keys(model).forEach((n, i) => {
             const userX = width / 2,
@@ -575,16 +591,6 @@ class GridView2D {
                 .attr('step', n)
                 .attr('cls', 'rpi')
                 .attr('style', style);
-            /*svg.append('image')
-                .attr('id', `rpi-${n}`)
-                .attr('x', userX)
-                .attr('y', userY)
-                .attr('width', 30)
-                .attr('height', 30)
-                .attr('href', 'http://120.125.83.10:8090/static/assets/img/user2.png')
-                .attr('step', n)
-                .attr('cls', 'rpi')
-                .attr('style', style);*/
 
             model[n].forEach(({ x, y, r = 4 * scale.r, class: clsName }) => {
                 item.x.push(x);
@@ -638,7 +644,6 @@ class GridView2D {
             `);
         });
 
-        svg.select('g').remove();
         svg.selectAll('circle')
             .on('mousemove', function () {
                 const target = d3.select(this);
@@ -655,12 +660,12 @@ class GridView2D {
                     const color = self.#data[
                         self.#data.findIndex(({ name }) => name === step)
                     ].color;
-                    const style = `stroke-width: 2px; stroke: black; fill: ${color};`;
                     svg.selectAll('circle').filter(function () {
                         return d3.select(this).attr('step') === step;
-                    }).attr('style', style);
+                    }).attr('style', `stroke-width: 2px; stroke: black; fill: ${color};`);
                 }
-            }).on('mouseout', function () {
+            })
+            .on('mouseout', function () {
                 text.attr('display', 'none');
 
                 const target = d3.select(this);
@@ -669,23 +674,44 @@ class GridView2D {
                     const color = self.#data[
                         self.#data.findIndex(({ name }) => name === step)
                     ].color;
-                    const style = `stroke-width: 2px; stroke: ${color}; fill: ${color};`;
                     svg.selectAll('circle').filter(function () {
                         return d3.select(this).attr('step') === step;
-                    }).attr('style', style);
+                    }).attr('style', `stroke-width: 2px; stroke: ${color}; fill: ${color};`);
                 }
             });
-        const ripples = svg.append('g');
-        svg.selectAll('circle')
-            .filter(function () {
-                const len = self.#data.length;
-                return this.id === `rpi-${self.#data[len - 1].name}`;
-            })
-            .each(_transition);
 
-        const colorChart = this.#data.map(({ name, color }) => {
+        let step = 1;
+        svg.select('g').remove();
+        let ripples = svg.append('g');
+        svg.select(`circle#rpi-T${step}`).each(_transition);
+        svg.selectAll('circle').attr('visibility', 'hidden');
+        svg.selectAll(`circle[step="T${step}"]`).attr('visibility', 'visible');
+        svg.selectAll('circle[step="Real"]').attr('visibility', 'visible');
+
+        let intervalID = setInterval(() => {
+            if (!this.useFile) clearInterval(intervalID);
+
+            svg.select(`circle#rpi-T${step}`).interrupt();
+            svg.select('g').remove();
+            ripples = svg.append('g');
+
+            if (++step > this.#data.length) step = 1;
+            svg.select(`circle#rpi-T${step}`).each(_transition);
+            svg.selectAll('circle').attr('visibility', 'hidden');
+            svg.selectAll(`circle[step="T${step}"]`).attr('visibility', 'visible');
+            svg.selectAll('circle[step="Real"]').attr('visibility', 'visible');
+            $('#model-color-chart > div').hide();
+            $(`#model-color-chart > div:nth-of-type(${step})`).show();
+            for(let i = 1; i < step; i++) {
+                //svg.selectAll(`circle[step="T${i}"]`).attr('visibility', 'visible');
+                svg.selectAll(`circle#rpi-T${i}`).attr('visibility', 'visible');
+                $(`#model-color-chart > div:nth-of-type(${i})`).show();
+            }
+        }, 2000);
+
+        const colorChart = this.#data.map(({ name, color }, i) => {
             return `
-                <div>
+                <div style="display: ${i ? 'none' : 'block'}">
                     <label class="color-chart" style="background: ${color};"></label>
                     <label>${name}</label>
                 </div>
@@ -703,9 +729,9 @@ class GridView2D {
 
         function _transition() {
             const target = d3.select(this);
-            const x = target.attr('cx') || target.attr('x'),
-                y = target.attr('cy') || target.attr('y'),
-                r = target.attr('r') || target.attr('height'),
+            const x = target.attr('cx'),
+                y = target.attr('cy'),
+                r = target.attr('r'),
                 step = target.attr('step');
             const color = self.#data[
                 self.#data.findIndex(({ name }) => name === step)
@@ -717,8 +743,8 @@ class GridView2D {
                 .attr('d', d3.arc()
                     .innerRadius(0)
                     .outerRadius(r)
-                    .startAngle(-Math.PI * 0.35)
-                    .endAngle(Math.PI * 0.35))
+                    .startAngle(-Math.PI * 0.32)
+                    .endAngle(Math.PI * 0.32))
                 .attr('opacity', .7)
                 .attr('fill-opacity', .4)
                 .attr('style', style)
@@ -728,8 +754,8 @@ class GridView2D {
                 .attr('d', d3.arc()
                     .innerRadius(0)
                     .outerRadius(self.layout.alertArea)
-                    .startAngle(-Math.PI * 0.35)
-                    .endAngle(Math.PI * 0.35)) //調整波紋大小
+                    .startAngle(-Math.PI * 0.32)
+                    .endAngle(Math.PI * 0.32)) //調整波紋大小
                 .attr('opacity', 0)
                 .remove();
 
