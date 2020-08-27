@@ -11,7 +11,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
     <script src="{{ url_for("static", filename="js/gridview.js") }}"></script>
-    <script src="{{ url_for("static", filename="js/gridview.3d.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/model.js") }}"></script>
     <script src="{{ url_for("static", filename="js/info.division.js") }}"></script>
     <script src="{{ url_for("static", filename="js/socket.handler.js") }}"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
@@ -134,7 +134,7 @@
         }
     });
 
-    gridview3d.initialize();
+    gridview.initialize();
 
 
     function decode(str) {
@@ -149,7 +149,7 @@
     let modelFile = '{{ model_file_content }}';
     if (modelFile) {
         modelFile = JSON.parse(decode(modelFile));
-        gridview3d.readFile(modelFile);
+        gridview.readFile(modelFile);
         $('nav a.nav-link:nth-of-type(2)').click();
     }
 </script>

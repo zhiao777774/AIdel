@@ -139,7 +139,8 @@ nav .disabled.title {
 }
 
 #model-file-div .card-header {
-    background-color: rgb(7 8 226 / 3%);;
+    background-color: rgb(7 8 226 / 3%);
+    ;
 }
 
 #model-file-div .card-header span img {
@@ -157,6 +158,28 @@ nav .disabled.title {
 
 #model-file-div .card-body {
     padding: 20px;
+}
+
+#model-color-chart {
+    position: fixed;
+    background: white;
+    padding-left: 20px;
+    padding-top: 18px;
+}
+
+#model-color-chart > div {
+    margin-bottom: 10px;
+}
+
+#model-color-chart .color-chart {
+    border-radius: 30px;
+    margin-bottom: -7px;
+}
+
+#model-color-chart .color-chart+label {
+    margin-left: 5px;
+    font-weight: bold;
+    font-size: 18px;
 }
 
 @media (max-width: 900px) {
