@@ -259,7 +259,7 @@ class GoogleService():
         params = {
             'key': self._gmaps_key,
             'query': type_,
-            'location': ','.join(latlng),
+            'location': ','.join(map(lambda c: str(c), latlng)),
             'radius': radius,
             'language': 'zh-TW'
         }
@@ -289,8 +289,8 @@ class GoogleService():
         constructed_url = service_url + result_type
         params = {
             'key': self._gmaps_key,
-            'origin': ','.join(start),
-            'destination': ','.join(destination),
+            'origin': ','.join(map(lambda c: str(c), start)),
+            'destination': ','.join(map(lambda c: str(c), destination)),
             'mode': 'walking',
             'language': 'zh-TW'
         }

@@ -319,6 +319,7 @@ class GridView2D {
 
     initialize() {
         d3.select('#model-3d').select('svg').remove();
+        $('#model-3d > div#model-color-chart').remove();
 
         const { width, height, resolution, style } = this.layout;
         const svg = d3.select('#model-3d').append('svg')
