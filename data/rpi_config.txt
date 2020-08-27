@@ -1,0 +1,2 @@
+sudo nano /etc/dhcpcd.conf
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
