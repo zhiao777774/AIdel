@@ -1,6 +1,7 @@
 import abc
 import os
 import time
+import re
 import requests
 import wave
 import pyaudio
@@ -13,8 +14,8 @@ from threading import Thread
 from xml.etree import ElementTree
 from enum import Enum
 
-#import word_vector_machine as wvm
 import file_controller as fc
+from .word_vector_machine import find_synonyms
 
 
 class AbstractService:
@@ -296,13 +297,31 @@ class GoogleService():
         }
 
         response = requests.get(constructed_url, params=params)
-        directions = []
+        result = {}
         if response.status_code == 200:
             res = response.json()
-            print(res)
+            leg = res['routes'][0]['legs'][0]
 
+            if leg:
+                result['distance'] = leg['distance']['value']
+                result['duration'] = leg['duration']['value']
+                result['start_location'] = dict(
+                    **leg['start_location'], address = leg['start_address'])
+                result['end_location'] = dict(
+                    **leg['end_location'], address = leg['end_address'])
+                result['routes'] = []
 
-        return directions
+                html_cleaner = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
+                for step in leg['steps']:
+                    result['routes'].append({
+                        'distance': step['distance']['value'],
+                        'duration': step['duration']['value'],
+                        'instruction': re.sub(html_cleaner, '', step['html_instructions']),
+                        'start_location': step['start_location'],
+                        'end_location': step['end_location']
+                    })
+
+        return result
 
     def execute(self, service, type_):
         lat = 0
