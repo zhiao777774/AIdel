@@ -4,6 +4,10 @@ __pycache__/
 *$py.class
 
 data/imageSet/
+
 node_modules/
+
 yolov3.weights
 yolo_weights.h5
+
+*.npy
