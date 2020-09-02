@@ -60,8 +60,7 @@ def initialize():
             bboxes = _calc_angle(result, bboxes)
             create_environmental_model(
                 file_path = f'{ROOT_PATH}/data/environmentalModel.json',
-                height = result.shape[0], width = result.shape[1],
-                resolution = _RESOLUTION, bboxes = bboxes)
+                image = result, resolution = _RESOLUTION, bboxes = bboxes)
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)

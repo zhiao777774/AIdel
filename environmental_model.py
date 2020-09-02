@@ -1,6 +1,7 @@
 import socketio
 
 import file_controller as fc
+from .db_handler import np_cvt_base64img
 
 
 class EnvironmentalModel:
@@ -45,15 +46,16 @@ class EnvironmentalModelSocket:
 
 _MODEL_SOCKET = EnvironmentalModelSocket('120.125.83.10', '8090')
 
-def create_environmental_model(file_path, height, width, resolution, bboxes):
+def create_environmental_model(file_path, image, resolution, bboxes):
     _to_str = lambda dic: dict(zip(
             map(lambda k: k, dic.keys()),
             map(lambda v: str(v), dic.values())
         ))
 
     model = {
-        'height': height,
-        'width': width,
+        'image': np_cvt_base64img(image),
+        'height': image.shape[0],
+        'width': image.shape[1],
         'resolution': resolution, 
         'obstacles' : []
     }
