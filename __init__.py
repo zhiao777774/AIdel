@@ -133,6 +133,7 @@ def _calc_distance(frame, dets):
 
     for bbox in bboxes:
         distance = _measure_distance(_CALIBRATION_DISTANCE, _FOCALLEN, bbox)
+        distance = 1.2687 * distance + 4.5514 #利用迴歸線校正距離
         distance = round(distance, 2)
         bbox.distance = distance
         x = int(bbox.center()[0] - bbox.width / 4)
@@ -146,14 +147,12 @@ def _calc_distance(frame, dets):
 def _measure_distance(calibration_distance, focallen, bbox):
     rad = bbox.width
     size = bbox.minEnclosingCircle()
-    print(f"min enclosing circle's radius: {size}")
 
     measurementor = Measurementor(focallen)
     distance = measurementor.measure(size, rad)
 
     if distance < calibration_distance:
         distance = calibration_distance + distance
-    print(f'Distance in cm {distance}')
 
     return distance
 
@@ -173,7 +172,6 @@ def _calc_angle(frame, bboxes):
         angle = round(angle * 360 / 2 / np.pi, 1)
         bbox.angle = angle
         
-        print(f'angle degrees {angle}')
         x = int(v2_x - bbox.width / 4)
         y = int(bbox.coordinates.lt.y - 25)
         cv2.putText(frame, text=f'{angle}°', org=(x, y),
