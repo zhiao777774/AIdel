@@ -558,7 +558,6 @@ class GridView2D {
 
         const xCenter = (lb.x + rb.x) / 2;
 
-        distance = 1.2687 * distance + 4.5514; //利用迴歸線校正距離
         let y = this.rpi.y - distance * this.layout.scale.h;
         y += this.layout.resolution * (this.step - 1);
         //y -= this.layout.resolution * ((distance - 30) / 10);
@@ -921,7 +920,7 @@ class GridView2D {
             title: '即時影像',
             position: {
                 my: 'right bottom',
-                at: 'right bottom',
+                at: 'center+400px center+100px',
                 of: window
             },
             autoOpen: true,
