@@ -1,4 +1,5 @@
 import socketio
+import logging
 
 import file_controller as fc
 from .db_handler import np_cvt_base64img
@@ -29,6 +30,9 @@ class EnvironmentalModelSocket:
         self._socket = socketio.Client()
         self._socket.connect(f'http://{host}:{port}')
         print('Environmental model socket is connecting.')
+
+        log = logging.getLogger('socketio')
+        log.setLevel(logging.ERROR)
 
     def __enter__(self):
         return self
