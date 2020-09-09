@@ -1,12 +1,16 @@
 import cv2
+import base64
 import numpy as np
-from imutils import perspective #imutils在pi上有出錯，記得修正
-from skimage.filters import threshold_local
+from PIL import Image
+from io import BytesIO
+# from imutils import perspective #imutils在pi上有出錯，記得修正
+# from skimage.filters import threshold_local
 
 
-class ImageProcessor:
+class NPImage:
     def __init__(self, frame):
-        self._frame = frame
+        self._frame = frame.copy()
+        self._original = frame.copy()
         
     def rgb2gray(self):
         self._frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
@@ -23,16 +27,26 @@ class ImageProcessor:
         self._frame = cv2.morphologyEx(self.frame, type_, kernel)
         
     def dilate(self, nIter = 1):
-        self._frame = cv2.dilate(self.frame, iterations = nIter)
+        kernel = np.ones((3, 3), np.uint8)
+        self._frame = cv2.dilate(self.frame, kernel, iterations = nIter)
         
     def erode(self, nIter = 1):
-        self._frame = cv2.erode(self.frame, iterations = nIter)
+        kernel = np.ones((3, 3), np.uint8)
+        self._frame = cv2.erode(self.frame, kernel, iterations = nIter)
 
-    def basic_preprocess(self):
+    def blur(self):
+        self._frame = cv2.GaussianBlur(self.frame, (11, 11), 0)
+
+    def find_contours(self):
         self.rgb2gray()
-        self.threshold()
-        self.morphologyEx()
+        self.blur()
+        edged = cv2.Canny(self.frame, 30, 150)
 
+        contours, _ = cv2.findContours(edged, 
+            cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        return contours
+    '''
     def cvt_to_overlook(self, original_frame):
         h, w, _ = original_frame.shape
         screenCnt = np.array([
@@ -47,7 +61,7 @@ class ImageProcessor:
         #warped = (warped > T).astype('uint8') * 255
 
         return warped
-
+    
     def _draw_lines(self, original_frame, lines, color = [255, 0, 0], thickness = 3):
         if lines is None:
             return
@@ -71,7 +85,58 @@ class ImageProcessor:
 
         frame = cv2.addWeighted(frame, 0.8, new_frame, 1.0, 0.0)
         return frame
-
+    '''
     @property
     def frame(self):
         return self._frame
+
+    @property
+    def original(self):
+        return self._original
+
+
+def np_cvt_base64img(np_image, _format='JPEG'):
+    buffered = BytesIO()
+    img = Image.fromarray(np_image)
+    img.save(buffered, format=_format)
+
+    buffered.seek(0)
+    base64img_str = base64.b64encode(buffered.getvalue()).decode()
+    return base64img_str
+
+
+if __name__ == '__main__':
+    capture = cv2.VideoCapture(0)
+
+    while True:
+        image = capture.read()[1]
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+        edged = cv2.Canny(blurred, 60, 60)
+        contours, _ = cv2.findContours(edged.copy(), 
+            cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        frame = image.copy()
+        cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+
+        h = image.shape[0]
+        w = image.shape[1]
+
+        for c in contours:
+            area = cv2.contourArea(c)  #計算面積
+
+            threshold = 50 # int((h / 4) * (w / 4))
+            if area >= threshold:
+                M = cv2.moments(c)
+                try:
+                    cX = int(M['m10'] / M['m00'])
+                    cY = int(M['m01'] / M['m00'])
+                except ZeroDivisionError:
+                    continue
+
+                x, y, w, h = cv2.boundingRect(c)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        cv2.imshow('result', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break

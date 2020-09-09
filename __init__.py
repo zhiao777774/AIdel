@@ -7,7 +7,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 
 from .file_controller import ROOT_PATH
-# from .image_processor import ImageProcessor
+from .image_processor import NPImage
 from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
 from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundError
@@ -30,18 +30,8 @@ def initialize():
     raw_capture = PiRGBArray(camera)
     # out = cv2.VideoWriter('', 
     #     cv2.VideoWriter_fourcc(*'XVID'), _FRAME_RATE, _FRAME_SIZE)
-
     time.sleep(0.1)
-    '''
-    def _image_preprocess(frame):
-        processor = ImageProcessor(frame)
-        processor.basic_preprocess()
-        return processor.frame
 
-    def _project_to_2d(frame):
-        processor = ImageProcessor(frame)
-        return processor.cvt_to_overlook(frame)
-    '''
     _signal_handle()
     _init_services()
     _enable_sensors()
@@ -55,8 +45,9 @@ def initialize():
         result, dets = detect(frame)
 
         bboxes = []
-        if dets:
-            bboxes = _calc_distance(result, dets)
+        bboxes += _find_contours(result)
+        if dets or bboxes:
+            bboxes = _calc_distance(result, dets, bboxes)
             bboxes = _calc_angle(result, bboxes)
             create_environmental_model(
                 file_path = f'{ROOT_PATH}/data/environmentalModel.json',
@@ -121,11 +112,11 @@ def _enable_sensors():
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]
 
-def _calc_distance(frame, dets):
+def _calc_distance(frame, dets, bboxes):
     h = frame.shape[0]
     w = frame.shape[1]
 
-    bboxes = _generate_bboxes(dets)
+    bboxes += _generate_bboxes(dets)
     bboxes = [bbox for bbox in bboxes
               if bbox.coordinates.lb.y >= int(h / 2)]
     bboxes = [bbox for bbox in bboxes
@@ -179,6 +170,18 @@ def _calc_angle(frame, bboxes):
                     color=(0, 0, 255), thickness=2)
     
     return bboxes
+
+def _find_contours(frame, threshold = 50):
+    dets = []
+
+    for cnt in NPImage(frame).find_contours():
+        area = cv2.contourArea(cnt)
+        if area >= threshold:
+            x, y, w, h = cv2.boundingRect(cnt)
+            dets.append('unknown', 1, (x, y, x + w, y + h))
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+    return _generate_bboxes(dets)
 
 def _save_image(image):
     lat, lng = _DICT_SENSORS['GPS'].latlng()
