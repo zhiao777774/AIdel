@@ -44,8 +44,11 @@ def initialize():
         frame = frame.array
         result, dets = detect(frame)
 
+        h = result.shape[0]
+        w = result.shape[1]
+
         bboxes = []
-        bboxes += _find_contours(result)
+        bboxes += _find_contours(result, threshold = int((h / 4) * (w / 4)))
         if dets or bboxes:
             bboxes = _calc_distance(result, dets, bboxes)
             bboxes = _calc_angle(result, bboxes)
@@ -60,7 +63,6 @@ def initialize():
         
         if bboxes:
             h = int(result.shape[0] / 2)
-            w = result.shape[1]
             maze = generate_maze(data = bboxes, height = h, width = w,
                 benchmark = h, resolution = _RESOLUTION)
             maze = Maze(maze)
@@ -171,14 +173,14 @@ def _calc_angle(frame, bboxes):
     
     return bboxes
 
-def _find_contours(frame, threshold = 50):
+def _find_contours(frame, threshold = 30):
     dets = []
 
     for cnt in NPImage(frame).find_contours():
         area = cv2.contourArea(cnt)
         if area >= threshold:
             x, y, w, h = cv2.boundingRect(cnt)
-            dets.append('unknown', 1, (x, y, x + w, y + h))
+            dets.append(('unknown', 1, (x, y, x + w, y + h)))
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     return _generate_bboxes(dets)
