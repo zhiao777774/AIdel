@@ -225,9 +225,22 @@ class Responser:
     def __init__(self):
         self._response = fc.read_json(f'{fc.ROOT_PATH}/data/response.json')
 
-    def decide_response(self, direction):
+    def decide_response(self, keyword):
         res = self._response
-        return res[direction]
+
+        direction, distance = keyword.split(',')
+        keyword = direction
+
+        if direction == '^':
+            for t in (30, 50, 100):
+                if int(distance) <= t:
+                    keyword = f'^{t}'
+        elif direction in ('<', '>'):
+            for t in (50, 100, 150, 200):
+                if int(distance) <= t:
+                    keyword = f'{direction}{t}'
+
+        return res[keyword]
 
     def tts(self, input_text):
         subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'

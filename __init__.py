@@ -77,7 +77,10 @@ def initialize():
 
             print(maze)
             print(dirs)
-            res_audio_file = resp.decide_response(dirs[0])
+            res_audio_file = resp.decide_response(f'{dirs[0]},{bboxes[0]}')
+            resp.play_audio(res_audio_file)
+        else:
+            res_audio_file = resp.decide_response(f'^,{float("inf")}')
             resp.play_audio(res_audio_file)
         
         cv2.waitKey(1) & 0xFF
