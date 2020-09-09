@@ -2,6 +2,7 @@ import json
 import requests
 import pathlib
 import logging
+from xml.etree import ElementTree
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -71,8 +72,8 @@ def latlng_query_addr():
 
     service_url = 'https://addr.tgos.tw/addrws/v30/GeoQueryAddr.asmx/PointQueryAddr'
     params = {
-        'oAPPId': 'yplbHN5BJuiEf7LgSExdqxgq7sWsC3ixOinIiChGRbQPLvpGMD+gJQ==',
-        'oAPIKey': 'cGEErDNy5yN/1fQ0vyTOZrghjE+jIU6upB/qBs9aoOxKqAeB/zLieVBCYS2k8BuE+UTfAliTTUmvPT61TZIiQctLbnoWpQmk8Kv4M2DcPjcUNM7zNCrPglb3vGflAyMzHtGKvQW/aEsVPTs0tJubkV8qAYvr9w07TvNuV4hrT0fegvck5L12WfaVeDMjXBxu9fpErze+e/aYi5Sk+qeJwQrdYN6tBZ/n2m5jKGpEiX7Zk5sOLGsf1n8JEgOAtb/W9MVMxNsFUw6XzzxWrsuf+6x0iqdULd1pRnaBzBXeag4/WyYxiUSmulD9jxeGC8Ll7uttC6pgt57NJAsWt2VKn0+ypkNF9Cf+',
+        'oAPPId': 'm5kla1b9GCm7bcg+/iokiz6AOhrfMQTeheBsY9jVBa0sWWDdyl8EtQ==',
+        'oAPIKey': 'cGEErDNy5yNr14zbsE/4GSfiGP5i3PuZfMhzHGiONFIaoRFsyjh6uAJeOlEvwni+WPqlt7m2eI1sQb5+C+9qAZ8kSQOWuweDxayppzu5kVQgKdsHkOcJ69btNxWC4mOuuEpC7KhYnJOxByyIeQss4s15UxQ69CtK6CnVv8AZ+HCc79sqB/w233C+PxntB3U4MIE3ZUYMKjHPXGJMas2GHVuPrDsoYIrqzSTioBvN9MN0io5ybU7/i3uq7y+ZOkbavc+//BE+YLgojSDw/sMEFhivN7IWbsdXuoVN4EYw/TxVVBbqZJ1NQ7ZxcOooBrtdAGAnrKDjUXmJ45Icvx47oQ==',
         'oPX': req_data['lng'],
         'oPY': req_data['lat'],
         'oBuffer': req_data['buffer'],
@@ -86,8 +87,11 @@ def latlng_query_addr():
     response = requests.get(service_url, params=params, headers=headers)
     address = ''
     if response.status_code == 200:
-        res = response.json()
-        total = res['Info']['Total']
+        root = ElementTree.fromstring(response.text.encode('utf-8'))
+        res = root.text.replace(' ', '') \
+            .replace('\\n', '').replace('\\"', '')
+        res = json.loads(res)
+        total = int(res['Info'][0]['Total'])
 
         if total > 0:
             address = res['AddressList'][0]['FULL_ADDR']
