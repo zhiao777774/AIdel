@@ -3,7 +3,8 @@ import requests
 from threading import Thread
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from .db_handler import MongoDB, np_cvt_base64img
+from .image_processor import np_cvt_base64img
+from .db_handler import MongoDB
 from .sensor_module import Buzzer
 from .utils import AsyncTimer
 

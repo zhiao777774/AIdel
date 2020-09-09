@@ -1,7 +1,7 @@
 import socketio
 
 import file_controller as fc
-from .db_handler import np_cvt_base64img
+from .image_processor import np_cvt_base64img
 
 
 class EnvironmentalModel:

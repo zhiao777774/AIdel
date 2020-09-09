@@ -1,10 +1,5 @@
-#import pymongo
-import numpy as np
-import cv2
+# import pymongo
 import socketio
-import base64
-from PIL import Image
-from io import BytesIO
 
 '''
 class MongoDB:
@@ -180,12 +175,3 @@ class MongoDB:
             @self._socket.on(res_event or f'{req_event}Result')
             def _handler(data):
                 callback(data)
-
-def np_cvt_base64img(np_image, _format='JPEG'):
-    buffered = BytesIO()
-    img = Image.fromarray(np_image)
-    img.save(buffered, format=_format)
-
-    buffered.seek(0)
-    base64img_str = base64.b64encode(buffered.getvalue()).decode()
-    return base64img_str
