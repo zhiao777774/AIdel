@@ -13,8 +13,10 @@ from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
 
-from .yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
-from .yolo3.utils import letterbox_image
+# from .yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+# from .yolo3.utils import letterbox_image
+from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+from yolo3.utils import letterbox_image
 import os
 from keras.utils import multi_gpu_model
 
@@ -233,47 +235,6 @@ def detect_realtime(yolo, output_path = ''):
     import operator
     from enum import Enum
     from collections import namedtuple
-    import os
-    import json
-
-    ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
-
-    def write_json(path, data):
-        path = path if ROOT_PATH in path else (ROOT_PATH + '/' + path)
-
-        with open(path , 'w') as writer:
-            data = json.dumps(data)
-            writer.write(data)
-            return True
-
-        return False
-
-    def _create_environmental_model(bboxes):
-        _to_str = lambda dic: dict(zip(
-                map(lambda k: k, dic.keys()),
-                map(lambda v: str(v), dic.values())
-            ))
-
-        json = []
-        for bbox in bboxes:
-            lt = _to_str(dict(bbox.coordinates.lt._asdict()))
-            rt = _to_str(dict(bbox.coordinates.rt._asdict()))
-            lb = _to_str(dict(bbox.coordinates.lb._asdict()))
-            rb = _to_str(dict(bbox.coordinates.rb._asdict()))
-
-            json.append({
-                'class': bbox.clsName,
-                'confidence': str(bbox.confidence),
-                'distance': str(bbox.distance),
-                'coordinate': {
-                    'lt': lt,
-                    'rt': rt,
-                    'lb': lb,
-                    'rb': rb,
-                }
-            })
-
-        write_json('model_data/environmentalModel.json', json)
 
     class BoundingBox:
         def __init__(self, det):
@@ -539,6 +500,25 @@ def detect_realtime(yolo, output_path = ''):
 
         return maze
 
+    def _find_contours(frame, threshold = 30):
+        dets = []
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        blured = cv2.GaussianBlur(gray, (11, 11), 0)
+        edged = cv2.Canny(blured, 30, 150)
+        contours, _ = cv2.findContours(edged, 
+            cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area >= threshold:
+                x, y, w, h = cv2.boundingRect(cnt)
+                dets.append(('unknown', 1, (x, y, x + w, y + h)))
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        return [BoundingBox(det) for det in dets]
+
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, 630)
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
@@ -547,15 +527,12 @@ def detect_realtime(yolo, output_path = ''):
     video_fps = 100.0
     video_size = (630, 360)
     
-    isOutput = True if output_path != '' else False
+    isOutput = output_path != ''
     if isOutput:
         print('!!! TYPE:', type(output_path), type(video_FourCC), type(video_fps), type(video_size))
         out = cv2.VideoWriter(output_path, video_FourCC, video_fps, video_size)
 
-    accum_time = 0
-    curr_fps = 0
-    fps = 'FPS: ??'
-    prev_time = timer()
+    dodger = Dodger()
     while True:
         frame = capture.read()[1]
         frame = cv2.resize(frame, (630, 360))
@@ -563,12 +540,13 @@ def detect_realtime(yolo, output_path = ''):
         image, objs = yolo.detect_image(image)
         result = np.asarray(image)
 
-        bboxes = []
-        if objs:
-            h = result.shape[0]
-            w = result.shape[1]
+        h = result.shape[0]
+        w = result.shape[1]
 
-            bboxes = [BoundingBox(det) for det in objs]
+        bboxes = []
+        bboxes += _find_contours(result, threshold = int((h / 4) * (w / 4)))
+        if objs or bboxes:
+            bboxes += [BoundingBox(det) for det in objs]
             bboxes = [bbox for bbox in bboxes 
                 if bbox.coordinates.lb.y >= int(h / 2)]
             bboxes = [bbox for bbox in bboxes
@@ -594,31 +572,22 @@ def detect_realtime(yolo, output_path = ''):
                     fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 0.50, 
                     color = (0, 0, 255), thickness = 2)
 
-            _create_environmental_model(bboxes)
-
         if bboxes: 
             h = int(result.shape[0] / 2)
-            w = result.shape[1]
-            maze = generate_maze(data = bboxes, height = h, width = w, benchmark = h, resolution = 90)
+            maze = generate_maze(data = bboxes, height = h, width = w,
+                benchmark = h, resolution = 90)
             maze = Maze(maze)
-            print(maze)
 
-            dodger = Dodger()
-            dirs = dodger.solve(maze)
+            try:
+                dirs = dodger.solve(maze)
+            except (PathNotFoundError, IndexError) as err:
+                cv2.waitKey(1) & 0xFF
+                print(err)
+                continue  
+
+            print(maze)
             print(dirs)
 
-        curr_time = timer()
-        exec_time = curr_time - prev_time
-        prev_time = curr_time
-        accum_time = accum_time + exec_time
-        curr_fps = curr_fps + 1
-        if accum_time > 1:
-            accum_time = accum_time - 1
-            fps = f'FPS: {curr_fps}'
-            curr_fps = 0
-
-        cv2.putText(result, text = fps, org = (3, 15), fontFace = cv2.FONT_HERSHEY_SIMPLEX,
-                    fontScale = 0.50, color = (255, 0, 0), thickness = 2)
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
         if isOutput:
@@ -636,13 +605,11 @@ def detect(yolo, frame):
     return result, objs
 
 if __name__ == '__main__':
-    '''
     yolo = YOLO(
         model_path = 'model_data/tiny_yolo_weights.h5',
         anchors_path = 'model_data/tiny_yolo_anchors.txt')
     detect_realtime(yolo)
     '''
-
     import cv2
 
     yolo = YOLO(
@@ -656,3 +623,4 @@ if __name__ == '__main__':
     cv2.imshow('result', result)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    '''
