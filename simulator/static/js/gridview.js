@@ -75,7 +75,7 @@ function initGridView(n) {
         .attr('cy', (d) => d.y)
         .attr('r', r)
         .attr('style', style.circle.default);
-    _activateObstacles(obstacles);
+    //_activateObstacles(obstacles);
 
     svg.data([{ x: impCoord.user.x, y: impCoord.user.y }])
         .append('circle')
