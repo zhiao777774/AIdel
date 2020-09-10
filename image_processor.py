@@ -42,7 +42,7 @@ class NPImage:
         self.blur()
         edged = cv2.Canny(self.frame, 30, 150)
 
-        contours, _ = cv2.findContours(edged, 
+        _, contours, _ = cv2.findContours(edged, 
             cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         return contours
