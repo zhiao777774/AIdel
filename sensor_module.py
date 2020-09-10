@@ -26,7 +26,7 @@ class HCSR04(Thread):
                 sr04 = hcsr04.Measurement(self.TRIGGER_PIN, self.ECHO_PIN)
                 raw_measurement = sr04.raw_distance()
                 distance = sr04.distance_metric(raw_measurement)
-            except UnboundLocalError:
+            except (UnboundLocalError, SystemError):
                 self._distance = None
                 continue
 
@@ -126,34 +126,38 @@ class MPU6050(Thread):
 
     def run(self):
         while True:
-            self._bus.write_byte_data(self._address, self._power_mgmt, 0)
+            try:
+                self._bus.write_byte_data(self._address, self._power_mgmt, 0)
 
-            print('Gyroskop')
-            print('--------')
+                print('Gyroskop')
+                print('--------')
 
-            gyroskop_xout = self._read_word_2c(0x43)
-            gyroskop_yout = self._read_word_2c(0x45)
-            gyroskop_zout = self._read_word_2c(0x47)
+                gyroskop_xout = self._read_word_2c(0x43)
+                gyroskop_yout = self._read_word_2c(0x45)
+                gyroskop_zout = self._read_word_2c(0x47)
 
-            gyroskop_xout_skaliert = gyroskop_xout / 131
-            gyroskop_yout_skaliert = gyroskop_yout / 131
-            gyroskop_zout_skaliert = gyroskop_zout / 131
+                gyroskop_xout_skaliert = gyroskop_xout / 131
+                gyroskop_yout_skaliert = gyroskop_yout / 131
+                gyroskop_zout_skaliert = gyroskop_zout / 131
 
-            print('gyroskop_xout: ', ('%5d' % gyroskop_xout), ' skaliert: ', gyroskop_xout_skaliert)
-            print('gyroskop_yout: ', ('%5d' % gyroskop_yout), ' skaliert: ', gyroskop_yout_skaliert)
-            print('gyroskop_zout: ', ('%5d' % gyroskop_zout), ' skaliert: ', gyroskop_zout_skaliert)
+                print('gyroskop_xout: ', ('%5d' % gyroskop_xout), ' skaliert: ', gyroskop_xout_skaliert)
+                print('gyroskop_yout: ', ('%5d' % gyroskop_yout), ' skaliert: ', gyroskop_yout_skaliert)
+                print('gyroskop_zout: ', ('%5d' % gyroskop_zout), ' skaliert: ', gyroskop_zout_skaliert)
 
-            self._gyroskop_xout = gyroskop_xout
-            self._gyroskop_yout = gyroskop_yout
-            self._gyroskop_zout = gyroskop_zout
+                self._gyroskop_xout = gyroskop_xout
+                self._gyroskop_yout = gyroskop_yout
+                self._gyroskop_zout = gyroskop_zout
 
-            print()
-            print('Beschleunigungssensor')
-            print('---------------------')
+                print()
+                print('Beschleunigungssensor')
+                print('---------------------')
 
-            beschleunigung_xout = self._read_word_2c(0x3b)
-            beschleunigung_yout = self._read_word_2c(0x3d)
-            beschleunigung_zout = self._read_word_2c(0x3f)
+                beschleunigung_xout = self._read_word_2c(0x3b)
+                beschleunigung_yout = self._read_word_2c(0x3d)
+                beschleunigung_zout = self._read_word_2c(0x3f)
+            except OSError:
+                time.sleep(1)
+                continue
 
             beschleunigung_xout_skaliert = beschleunigung_xout / 16384.0
             beschleunigung_yout_skaliert = beschleunigung_yout / 16384.0
@@ -221,16 +225,28 @@ class MPU6050(Thread):
 # 蜂鳴器
 class Buzzer:
     def __init__(self, buzzer_pin):
-        GPIO.setup(buzzer_pin, GPIO.OUT)
         self.BUZZER_PIN = buzzer_pin
 
+    def _play(self, pitch, duration):
+        period = 1.0 / pitch
+        delay = period / 2
+        cycles = int(duration * pitch)
+
+        for _ in range(cycles):
+            GPIO.output(self.BUZZER_PIN, True)
+            time.sleep(delay)
+            GPIO.output(self.BUZZER_PIN, False)
+            time.sleep(delay)
+
     def buzz(self, frequency, duration = 1):
-        buzzer = GPIO.PWM(self.BUZZER_PIN, 50)
-        buzzer.ChangeFrequency(frequency)
-        time.sleep(duration)
+        if isinstance(duration, int) or isinstance(duration, float):
+            duration = [duration for i in range(0, len(frequency))]
 
-        buzzer.stop()
-
+        GPIO.setup(self.BUZZER_PIN, GPIO.OUT)
+        for i, f in enumerate(frequency):
+            self._play(f, duration[i])
+            time.sleep(duration[i] * 0.5)
+        
 
 # 緊急按鈕
 class EmergencyButton(Thread):
