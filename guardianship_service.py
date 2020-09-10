@@ -47,14 +47,13 @@ class GuardianshipService(Thread):
                     self.push_notification(noti_type = '跌倒')
                     pushed = True
                 else: 
-                    self.buzzer.buzz(698, 0.5)
-                    self.buzzer.buzz(523, 0.5)
+                    self.buzzer.buzz([1568], 1)
             else:
                 print('解除跌倒警報!')
                 timer.stop()
                 pushed = False
 
-            time.sleep(1)
+            time.sleep(0.2)
 
     def _save(self):
         if not self.data: return
