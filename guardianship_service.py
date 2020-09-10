@@ -5,7 +5,6 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from .image_processor import np_cvt_base64img
 from .db_handler import MongoDB
-from .sensor_module import Buzzer
 from .utils import AsyncTimer
 
 
@@ -15,6 +14,7 @@ class GuardianshipService(Thread):
 
         self.data = dict()
         self.mpu = None
+        self.buzzer = None
         self.speech = ''
         self._cancel = False
 
@@ -29,7 +29,6 @@ class GuardianshipService(Thread):
         self._sched.add_job(self._save, 'cron', minute = period, id = 'save_image_job')
         self._sched.start()
 
-        buzzer = Buzzer(buzzer_pin = 16)
         timer = AsyncTimer()
         pushed = False
         while True:
@@ -48,8 +47,8 @@ class GuardianshipService(Thread):
                     self.push_notification(noti_type = '跌倒')
                     pushed = True
                 else: 
-                    buzzer.buzz(698, 0.5)
-                    buzzer.buzz(523, 0.5)
+                    self.buzzer.buzz(698, 0.5)
+                    self.buzzer.buzz(523, 0.5)
             else:
                 print('解除跌倒警報!')
                 timer.stop()
