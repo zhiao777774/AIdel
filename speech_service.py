@@ -233,12 +233,14 @@ class Responser:
 
         if direction == '^':
             for t in (30, 50, 100):
-                if int(distance) <= t:
+                if float(distance) <= t:
                     keyword = f'^{t}'
+                    break
         elif direction in ('<', '>'):
             for t in (50, 100, 150, 200):
-                if int(distance) <= t:
+                if float(distance) <= t:
                     keyword = f'{direction}{t}'
+                    break
 
         return res[keyword]
 
