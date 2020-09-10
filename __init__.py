@@ -14,7 +14,7 @@ from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundErr
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .guardianship_service import GuardianshipService
-from .sensor_module import HCSR04, GPS, MPU6050, EmergencyButton, destroy_sensors
+from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, EmergencyButton, destroy_sensors
 
 
 _CALIBRATION_DISTANCE = 35
@@ -36,6 +36,7 @@ def initialize():
     _init_services()
     _enable_sensors()
     # _DICT_SERVICE['GuardianshipService'].mpu = _DICT_SENSORS['MPU6050']
+    # _DICT_SERVICE['GuardianshipService'].buzzer = _DICT_SENSORS['Buzzer']
     
     dodger = Dodger()
     resp = Responser()
@@ -60,6 +61,17 @@ def initialize():
         cv2.imshow('result', result)
         # out.write(result)
         # _save_image(result)
+
+        hcsr04_distance = float(_DICT_SENSORS['HCSR04'].distance)
+        if hcsr04_distance < 50:
+            res_audio_file = resp.decide_response(f'stop,{hcsr04_distance}')
+            resp.play_audio(res_audio_file)
+            _DICT_SENSORS['Buzzer'].buzz(698, 0.5)
+            _DICT_SENSORS['Buzzer'].buzz(523, 0.5)
+
+            cv2.waitKey(1) & 0xFF
+            raw_capture.truncate(0)
+            continue  
         
         if bboxes:
             h = int(result.shape[0] / 2)
@@ -77,8 +89,12 @@ def initialize():
 
             print(maze)
             print(dirs)
-            res_audio_file = resp.decide_response(f'{dirs[0]},{bboxes[0]}')
+            res_audio_file = resp.decide_response(f'{dirs[0]},{bboxes[0].distance}')
             resp.play_audio(res_audio_file)
+
+            if dirs[0] in ('v', 'stop'):
+                _DICT_SENSORS['Buzzer'].buzz(698, 0.5)
+                _DICT_SENSORS['Buzzer'].buzz(523, 0.5)
         else:
             res_audio_file = resp.decide_response(f'^,{float("inf")}')
             resp.play_audio(res_audio_file)
@@ -105,6 +121,7 @@ def _enable_sensors():
         HCSR04(trigger_pin=23, echo_pin=24),
         # GPS(port='/dev/ttyAMA0'),
         MPU6050(),
+        Buzzer(buzzer_pin=16),
         # EmergencyButton(button_pin=26, 
         #   service=_DICT_SERVICE['GuardianshipService'])
     ]
@@ -129,7 +146,7 @@ def _calc_distance(frame, dets, bboxes):
 
     for bbox in bboxes:
         distance = _measure_distance(_CALIBRATION_DISTANCE, _FOCALLEN, bbox)
-        distance = 1.2687 * distance + 4.5514 #利用迴歸線校正距離
+        distance = 1.2687 * distance + 4.5514 # 利用迴歸線校正距離
         distance = round(distance, 2)
         bbox.distance = distance
         x = int(bbox.center()[0] - bbox.width / 4)
