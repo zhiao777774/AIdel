@@ -14,13 +14,14 @@ from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundErr
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .guardianship_service import GuardianshipService
-from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, EmergencyButton, destroy_sensors
+from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, Frequency, EmergencyButton, destroy_sensors
 
 
 _CALIBRATION_DISTANCE = 35
 _FOCALLEN = 14.536741214057509
 _FRAME_SIZE = (960, 720)
 _FRAME_RATE = 50
+_VIDEO_RATE = 20
 _RESOLUTION = 120
 
 def initialize():
@@ -28,19 +29,25 @@ def initialize():
     camera.resolution = _FRAME_SIZE
     camera.framerate = _FRAME_RATE
     raw_capture = PiRGBArray(camera)
-    # out = cv2.VideoWriter('', 
-    #     cv2.VideoWriter_fourcc(*'XVID'), _FRAME_RATE, _FRAME_SIZE)
+    # out = cv2.VideoWriter(
+    #     f'output_{time.strftime("%Y%m%d-%H%M", time.localtime())}.mp4', 
+    #     cv2.VideoWriter_fourcc(*'XVID'), _VIDEO_RATE, _FRAME_SIZE)
     time.sleep(0.1)
+
+    def _truncate_frame():
+        cv2.waitKey(1) & 0xFF
+        raw_capture.truncate(0)
 
     _signal_handle()
     _init_services()
     _enable_sensors()
+    _DICT_SENSORS['Buzzer'] = Buzzer(buzzer_pin=16)
     # _DICT_SERVICE['GuardianshipService'].mpu = _DICT_SENSORS['MPU6050']
     # _DICT_SERVICE['GuardianshipService'].buzzer = _DICT_SENSORS['Buzzer']
     
     dodger = Dodger()
     resp = Responser()
-
+    
     for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
         frame = frame.array
         result, dets = detect(frame)
@@ -62,15 +69,13 @@ def initialize():
         # out.write(result)
         # _save_image(result)
 
-        hcsr04_distance = float(_DICT_SENSORS['HCSR04'].distance)
-        if hcsr04_distance < 50:
-            res_audio_file = resp.decide_response(f'stop,{hcsr04_distance}')
+        hcsr04_distance = _DICT_SENSORS['HCSR04'].distance
+        if hcsr04_distance and float(hcsr04_distance) < 50:
+            res_audio_file = resp.decide_response(f'stop,{float(hcsr04_distance)}')
             resp.play_audio(res_audio_file)
-            _DICT_SENSORS['Buzzer'].buzz(698, 0.5)
-            _DICT_SENSORS['Buzzer'].buzz(523, 0.5)
-
-            cv2.waitKey(1) & 0xFF
-            raw_capture.truncate(0)
+            _DICT_SENSORS['Buzzer'].buzz(Frequency.ALERT, 0.2, 1)
+            
+            _truncate_frame()
             continue  
         
         if bboxes:
@@ -82,8 +87,7 @@ def initialize():
             try:
                 dirs = dodger.solve(maze)
             except (PathNotFoundError, IndexError) as err:
-                cv2.waitKey(1) & 0xFF
-                raw_capture.truncate(0)
+                _truncate_frame()
                 print(err)
                 continue     
 
@@ -93,14 +97,9 @@ def initialize():
             resp.play_audio(res_audio_file)
 
             if dirs[0] in ('v', 'stop'):
-                _DICT_SENSORS['Buzzer'].buzz(698, 0.5)
-                _DICT_SENSORS['Buzzer'].buzz(523, 0.5)
-        else:
-            res_audio_file = resp.decide_response(f'^,{float("inf")}')
-            resp.play_audio(res_audio_file)
+                _DICT_SENSORS['Buzzer'].buzz(Frequency.ALERT, 0.2, 1)
         
-        cv2.waitKey(1) & 0xFF
-        raw_capture.truncate(0)
+        _truncate_frame()
 
 
 _DICT_SERVICE = {}
@@ -121,7 +120,6 @@ def _enable_sensors():
         HCSR04(trigger_pin=23, echo_pin=24),
         # GPS(port='/dev/ttyAMA0'),
         MPU6050(),
-        Buzzer(buzzer_pin=16),
         # EmergencyButton(button_pin=26, 
         #   service=_DICT_SERVICE['GuardianshipService'])
     ]
