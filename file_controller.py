@@ -8,7 +8,7 @@ def read_json(path):
     path = path if ROOT_PATH in path else (ROOT_PATH + '/' + path)
     result = None
 
-    with open(path , 'r') as reader:
+    with open(path , 'r', encoding = 'UTF-8') as reader:
         result = json.loads(reader.read())
 
     return result
