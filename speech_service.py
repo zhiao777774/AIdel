@@ -1,6 +1,7 @@
 import abc
 import os
 import time
+import math
 import re
 import requests
 import wave
@@ -108,22 +109,44 @@ class SpeechService(Thread):
 
             result = ServiceType.get_service(service).execute(service, place)
             if service == ServiceType.WHETHER.value:
-                print(f'-> 附近{"有" if result else "沒有"}{place}')
+                response = f'附近{"有" if result else "沒有"}{place}'
+                print(f'-> {response}')
+                self.response(response)
             elif service == ServiceType.NAVIGATION.value:
                 if not result:
                     print(f'-> 無法導航至{place}')
+                    self.response(f'無法導航至{place}')
                     continue
 
                 print(f'-> 正在幫您導航至{place}')
+                self.response(f'正在幫您導航至{place}')
+
+                navigator = Navigator(**result)
+                navigator.start()
+            elif service == ServiceType.SEARCH.value:
+                if result:
+                    print(f'-> 開始幫您尋找{place}')
+                    self.response(f'開始幫您尋找{place}')
+                    result.start()
+                else:
+                    print('對不起，請您再說一次')
+                    self.response('對不起，請您再說一次.wav')
 
     def response(self, text):
         resp = Responser(load = False)
-        audio_path = f'{fc.ROOT_PATH}/data/audio'
 
-        if not os.path.isfile(f'{audio_path}/{text}'):
-            resp.tts(text, f'{audio_path}/temp/{text}')
+        if not os.path.isfile(f'{fc.AUDIO_PATH}/{text}'):
+            t = Thread(target = resp.tts, 
+                args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
+            t.start()
+            t.join()
 
-        resp.play_audio(f'{audio_path}/temp/{text}.wav')
+            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
+            t = Thread(target = os.remove, 
+                args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
+            t.start()
+        else:
+            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
 
     def voice2text(self):
         audio = None
@@ -415,9 +438,70 @@ class GoogleService(AbstractService):
             return None
 
 
-class Searcher(AbstractService):
+class Searcher(AbstractService, Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+        self._keyword = None
+        self.objs = []
+
     def execute(self, service, keyword):
-        pass
+        self._keyword = keyword
+        return self
+
+    def run(self):
+        resp = Responser(load = False)
+
+        while True:
+            if self.objs:
+                k = [d for d in self.objs if d.clsName == self._keyword]
+                if not k: 
+                    time.sleep(1)
+                    continue
+
+                text = f'已找到{self._keyword}'
+                text += f'，位於您前方{round(k[0].distance / 100)}公尺處'
+                
+                t = Thread(target = resp.tts, 
+                    args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
+                t.start()
+                t.join()
+
+                resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
+                t = Thread(target = os.remove, 
+                    args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
+                t.start()
+
+                break
+
+            time.sleep(1)
+
+
+class Navigator(Thread):
+    def __init__(self, **kwargs):
+        Thread.__init__(self)
+        self.__dict__.update(kwargs)
+
+    def run(self):
+        resp = Responser(load = False)
+
+        for route in self._routes:
+            distance = float(route['distance'])
+            steps = math.ceil(distance / 61)
+            duration = math.ceil(distance / 0.92)
+            text = f'{route["instruction"]}，約走{distance}公尺'
+
+            t = Thread(target = resp.tts, 
+                args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
+            t.start()
+            t.join()
+
+            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
+            t = Thread(target = os.remove, 
+                args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
+            t.start()
+
+            time.sleep(duration + 1)
 
 
 if __name__ == '__main__':
