@@ -3,6 +3,7 @@ import json
 
 
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
+AUDIO_PATH = f'{ROOT_PATH}/data/audio'
 
 def read_json(path):
     path = path if ROOT_PATH in path else (ROOT_PATH + '/' + path)
