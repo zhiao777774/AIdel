@@ -523,7 +523,7 @@ def detect_realtime(yolo, output_path = ''):
 
     video_FourCC = cv2.VideoWriter_fourcc(*'XVID')
     video_fps = 100.0
-    video_size = (630, 360)
+    video_size = (960, 720)
     
     isOutput = output_path != ''
     if isOutput:
@@ -533,7 +533,7 @@ def detect_realtime(yolo, output_path = ''):
     dodger = Dodger()
     while True:
         frame = capture.read()[1]
-        frame = cv2.resize(frame, (630, 360))
+        frame = cv2.resize(frame, (960, 720))
         image = Image.fromarray(frame)
         image, objs = yolo.detect_image(image)
         result = np.asarray(image)
