@@ -20,13 +20,13 @@ from .word_vector_machine import find_synonyms
 
 class AbstractService:
     @abc.abstractmethod
-    def execute(self):
+    def execute(self, service, keyword):
         return NotImplemented
 
 
 class ServiceType(Enum):
-    SEARCH = '尋找'
-    WHETHER = '是否'
+    SEARCH = '找'
+    WHETHER = '有沒有'
     NAVIGATION = '導航'
 
     @classmethod
@@ -34,7 +34,7 @@ class ServiceType(Enum):
         GMAPS_KEY = 'AIzaSyC0NXEeivr01yTkj3vOcEXUFYJwvv32bMU'
 
         return {
-            cls.SEARCH.value: '', # GoogleService(GMAPS_KEY),
+            cls.SEARCH.value: Searcher(),
             cls.WHETHER.value: GoogleService(GMAPS_KEY),
             cls.NAVIGATION.value: GoogleService(GMAPS_KEY)
         }.get(service)
@@ -54,7 +54,8 @@ class SpeechService(Thread):
         while True:
             print('Recording...')
             sentence = self.voice2text()
-
+            if sentence == '無法翻譯': continue
+            '''
             keywords = [k for k in self._triggerable_keywords if k in sentence]
             triggerable = len(keywords) > 0
             if not triggerable:
@@ -62,25 +63,67 @@ class SpeechService(Thread):
 
             for k in keywords:
                 sentence = _replace_and_trim(sentence, k)
-            keywords = [k for k in ServiceType if k.value in sentence]
-
-            if not keywords:
-                # 同義詞搜尋
-                continue
-            elif (ServiceType.NAVIGATION in keywords) & (len(keywords) >= 2):
-                continue
-
-            service = keywords[1 if len(keywords) >= 2 else 0]
+            '''
+            service = [k for k in ServiceType if k.value in sentence]
             words = self.sentence_segment(sentence)
             keywords = self.extract_keywords(words)
+            keywords = self.filter_keywords(keywords, 5)
 
             for tag, weight in keywords:
-                print(tag + ' , ' + str(weight))
+                print(f'{tag} , {str(weight)}')
 
-            keywords = self.filter_keywords(keywords)
-            service, place = self.finds(keywords, service.value)
+            confidences = [conf for _, conf in keywords]
+            keywords = [tag for tag, _ in keywords]
 
-            ServiceType.get_service(service).execute(service, place)
+            if not service:
+                for i, tag in enumerate(keywords):
+                    synonyms = list(map(lambda s: s[0], find_synonyms(tag)))
+                    results = [k for k in ServiceType if k.value in synonyms]
+                    if results: 
+                        service = results
+
+                        temp = []
+                        for j, tag in enumerate(keywords):
+                            temp.append(results[0].value if j == i else tag)
+                        keywords = temp
+                        break
+
+                if not service:
+                    print('對不起，請您再說一次')
+                    self.response('對不起，請您再說一次.wav')
+                    continue
+            elif (ServiceType.NAVIGATION in service) & (len(service) >= 2):
+                print('對不起，請您再說一次')
+                self.response('對不起，請您再說一次.wav')
+                continue
+
+            service = service[1 if len(service) >= 2 else 0]
+            try:
+                service, place = self.finds(keywords, confidences, service.value)
+            except (IndexError, ValueError): 
+                print('對不起，請您再說一次')
+                self.response('對不起，請您再說一次.wav')
+                continue
+            print(f'Question: {service}->{place}')
+
+            result = ServiceType.get_service(service).execute(service, place)
+            if service == ServiceType.WHETHER.value:
+                print(f'-> 附近{"有" if result else "沒有"}{place}')
+            elif service == ServiceType.NAVIGATION.value:
+                if not result:
+                    print(f'-> 無法導航至{place}')
+                    continue
+
+                print(f'-> 正在幫您導航至{place}')
+
+    def response(self, text):
+        resp = Responser(load = False)
+        audio_path = f'{fc.ROOT_PATH}/data/audio'
+
+        if not os.path.isfile(f'{audio_path}/{text}'):
+            resp.tts(text, f'{audio_path}/temp/{text}')
+
+        resp.play_audio(f'{audio_path}/temp/{text}.wav')
 
     def voice2text(self):
         audio = None
@@ -91,7 +134,12 @@ class SpeechService(Thread):
         r = sr.Recognizer()
         with sr.Microphone(device_index=device['index']) as source:
             r.adjust_for_ambient_noise(source)
-            audio = r.listen(source)
+            try:
+                audio = r.listen(source, timeout = 5)
+            except sr.WaitTimeoutError:
+                text = '無法翻譯'
+                print(text)
+                return text
         '''
         r = sr.Recognizer()
         with sr.AudioFile('record.wav') as source:
@@ -100,10 +148,8 @@ class SpeechService(Thread):
         '''
         try:
             text = r.recognize_google(audio, language='zh-TW')
-        except sr.UnknownValueError:
+        except (sr.UnknownValueError, sr.RequestError):
             text = '無法翻譯'
-        except sr.RequestError as e:
-            text = f'無法翻譯{e}'
 
         print(text)
         return text
@@ -151,9 +197,9 @@ class SpeechService(Thread):
     def filter_keywords(self, keywords, threshold=10):
         return [k for k in keywords if k[1] >= threshold]
 
-    def finds(self, keywords, keyword):
-        if type(keywords[0]) is tuple:
-            keywords = map(lambda k: k[0], keywords)
+    def finds(self, keywords, confidences, keyword):
+        if isinstance(keywords[0], tuple):
+            keywords = list(map(lambda k: k[0], keywords))
 
         index = keywords.index(keyword)
         place = None
@@ -161,7 +207,12 @@ class SpeechService(Thread):
         if len(keywords) == 2:
             place = keywords[0 if index else 1]
         else:
-            place = keywords[index + 1]
+            keywords.remove(keyword)
+            confidences.pop(index)
+            keywords = [k for _, k in sorted(
+                zip(confidences, keywords), reverse = True)]
+
+            place = keywords[0]
 
         return (keyword, place)
 
@@ -222,10 +273,14 @@ class TextToSpeech:
 
 
 class Responser:
-    def __init__(self):
-        self._response = fc.read_json(f'{fc.ROOT_PATH}/data/response.json')
+    def __init__(self, load = True):
+        if load:
+            self._response = fc.read_json(f'{fc.ROOT_PATH}/data/response.json')
+        else:
+            self._response = None
 
     def decide_response(self, keyword):
+        if not self._response: return
         res = self._response
 
         direction, distance = keyword.split(',')
@@ -244,20 +299,20 @@ class Responser:
 
         return res[keyword]
 
-    def tts(self, input_text):
-        subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'
-        region_identifier = 'southcentralus'
-        app = TextToSpeech(subscription_key, region_identifier, input_text)
-        app.save_audio()
-
     def play_audio(self, audio_name):
         mixer.init()
         mixer.music.load(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
         mixer.music.play()
         while mixer.music.get_busy(): continue
 
+    def tts(self, input_text, audio_name = ''):
+        subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'
+        region_identifier = 'southcentralus'
+        app = TextToSpeech(subscription_key, region_identifier, input_text)
+        app.save_audio(audio_name)
 
-class GoogleService():
+
+class GoogleService(AbstractService):
     def __init__(self, gmaps_key):
         self._gmaps_key = gmaps_key
         self._gmaps = googlemaps.Client(key = gmaps_key)
@@ -296,7 +351,8 @@ class GoogleService():
                         'latitude': location['lat'],
                         'longitude': location['lng']
                     })
-                
+
+        print(f'Queried: {results}')
         return results
     
     def navigate(self, start, destination):
@@ -336,16 +392,17 @@ class GoogleService():
                         'end_location': step['end_location']
                     })
 
+        print(f'Queried: {result}')
         return result
 
-    def execute(self, service, type_):
-        lat = 0
-        lng = 0
+    def execute(self, service, keyword):
+        lat = 25.0040133
+        lng = 121.3427151
 
         if service == ServiceType.WHETHER.value:
-            return self.places_radar(latlng = (lat, lng), type_ = type_)
+            return self.places_radar(latlng = (lat, lng), type_ = keyword)
         elif service == ServiceType.NAVIGATION.value:
-            neighborhoods = self.places_radar(latlng = (lat, lng), type_ = type_)
+            neighborhoods = self.places_radar(latlng = (lat, lng), type_ = keyword)
 
             if neighborhoods:
                 neighborhood = neighborhoods[0]
@@ -358,40 +415,10 @@ class GoogleService():
             return None
 
 
+class Searcher(AbstractService):
+    def execute(self, service, keyword):
+        pass
+
+
 if __name__ == '__main__':
-    while True:
-        audio = None
-        text = None
-        pa = pyaudio.PyAudio()
-        device = pa.get_default_input_device_info()
-
-        print('Recording...')
-        r = sr.Recognizer()
-        with sr.Microphone(device_index = device['index']) as source: 
-            r.adjust_for_ambient_noise(source)
-            audio = r.listen(source)
-        
-        try:
-            text = r.recognize_google(audio, language = 'zh-TW')
-        except sr.UnknownValueError:
-            text = '無法翻譯'
-        except sr.RequestError as e:
-            text = f'無法翻譯{e}'
-        print(text)
-
-        dict_path = r'D:\Anaconda\Lib\site-packages\jieba\dict.txt.big.txt'
-        jieba.set_dictionary(dict_path)
-    
-        words = jieba.lcut(text)
-        print(words)
-
-        keywords = []
-        for word in words:
-            tags = jieba.analyse.extract_tags(word, topK = 5, withWeight = True)
-            if tags: keywords.append(tags[0])
-
-        for tag, weight in keywords:
-            print(tag + ' , ' + str(weight))
-
-        keywords = [k for k in keywords if k[1] >= 10]
-        print(keywords)
+    SpeechService().start()
