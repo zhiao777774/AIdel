@@ -4,6 +4,7 @@ from threading import Thread
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from .image_processor import np_cvt_base64img
+from .sensor_module import Frequency
 from .db_handler import MongoDB
 from .utils import AsyncTimer
 
@@ -32,7 +33,7 @@ class GuardianshipService(Thread):
         timer = AsyncTimer()
         pushed = False
         while True:
-            if not self.mpu or self._cancel:
+            if not self.mpu or not self.buzzer or self._cancel:
                 timer.stop()
                 time.sleep(1)
                 continue 
@@ -47,7 +48,7 @@ class GuardianshipService(Thread):
                     self.push_notification(noti_type = '跌倒')
                     pushed = True
                 else: 
-                    self.buzzer.buzz([1568], 1)
+                    self.buzzer.buzz(Frequency.ALARM, 1)
             else:
                 print('解除跌倒警報!')
                 timer.stop()
