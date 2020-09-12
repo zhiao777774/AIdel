@@ -1,11 +1,9 @@
-import logging
 from gensim.models import word2vec
 from gensim import models
 
 import file_controller as fc
 
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level = logging.INFO)
 MODEL_PATH = f'{fc.ROOT_PATH}/data/word2vec.model'
 _MODEL = models.Word2Vec.load(MODEL_PATH)
 
