@@ -1,5 +1,27 @@
 import time
+import logging
 from threading import Thread
+
+
+class Logger:
+    def __init__(self):
+        logging.basicConfig(
+            format = '%(asctime)s : %(levelname)s : %(message)s', 
+            level = logging.INFO)
+    
+    def info(self, message):
+        logging.info(message)
+
+    def warning(self, message):
+        logging.warning(message)
+
+    def error(self, message):
+        logging.error(message)
+
+    def critical(self, message):
+        logging.critical(message)
+
+logger = Logger()       
 
 
 class Timer:
