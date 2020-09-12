@@ -17,8 +17,8 @@ from xml.etree import ElementTree
 from enum import Enum
 
 import file_controller as fc
-from utils import logger
-from word_vector_machine import find_synonyms
+from .utils import logger
+from .word_vector_machine import find_synonyms
 
 
 class AbstractService:
@@ -28,7 +28,7 @@ class AbstractService:
 
 
 class ServiceType(Enum):
-    SEARCH = '找'
+    SEARCH = '尋找'
     WHETHER = '有沒有'
     NAVIGATION = '導航'
 
@@ -55,6 +55,12 @@ class SpeechService(Thread):
         self._triggerable_keywords = fc.read_json(keywords_path)
 
         self._mode = dict()
+        self._mode[ServiceType.NAVIGATION.name] = False
+        self._mode[ServiceType.SEARCH.name] = False
+
+        self._service = dict()
+        self._service[ServiceType.NAVIGATION.name] = None
+        self._service[ServiceType.SEARCH.name] = None
 
     def run(self):
         while True:
@@ -67,10 +73,14 @@ class SpeechService(Thread):
                     logger.info(f'正在停止{mode}')
                     self.response(f'正在停止{mode}.wav')
                     self._mode[ServiceType.NAVIGATION.name] = False
+                    self._service[ServiceType.NAVIGATION.name].exit = True
+                    self._service[ServiceType.NAVIGATION.name] = None
                 elif mode == '尋找' and self._mode[ServiceType.SEARCH.name]:  
                     logger.info(f'正在停止{mode}')
                     self.response(f'正在停止{mode}.wav')
                     self._mode[ServiceType.SEARCH.name] = False
+                    self._service[ServiceType.SEARCH.name].exit = True
+                    self._service[ServiceType.SEARCH.name] = None
                 else:
                     logger.info(f'{mode}功能未開啟')
                     self.response(f'{mode}功能未開啟.wav')
@@ -156,6 +166,7 @@ class SpeechService(Thread):
                 navigator.start()
 
                 self._mode[ServiceType.NAVIGATION.name] = True
+                self._service[ServiceType.NAVIGATION.name] = navigator
             elif service == ServiceType.SEARCH.value:
                 if result:
                     logger.info(f'開始幫您尋找{place}')
@@ -166,6 +177,7 @@ class SpeechService(Thread):
                     searcher.start()
 
                     self._mode[ServiceType.SEARCH.name] = True
+                    self._service[ServiceType.SEARCH.name] = searcher
                 else:
                     print('對不起，請您再說一次')
                     self.response('對不起，請您再說一次.wav')
@@ -277,7 +289,7 @@ class SpeechService(Thread):
 def _replace_and_trim(text, old, new=''):
     return text.replace(old, new).strip()
 
-def async_play_audio(text, remove = True, delay = 0, responser = None):
+def async_play_audio(text, remove = True, responser = None):
     responser = responser or Responser(load = False)
     if not isinstance(responser, Responser):
         responser = Responser(load = False)
@@ -288,13 +300,19 @@ def async_play_audio(text, remove = True, delay = 0, responser = None):
     t.join()
 
     if remove:
+        class Remover(Thread):
+            def __init__(self):
+                Thread.__init__(self)
+
+            def run(self):
+                while True:
+                    try: 
+                        os.remove(f'{fc.AUDIO_PATH}/temp/{text}.wav')
+                        break
+                    except PermissionError: time.sleep(1)
+
         def _remove_audio():
-            time.sleep(delay)
-            try:
-                t = Thread(target = os.remove, 
-                    args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
-                t.start()
-            except PermissionError: _remove_audio()
+            Remover().start()
 
         responser.play_audio(f'temp/{text}.wav', callback = _remove_audio)
 
@@ -498,6 +516,7 @@ class Searcher(AbstractService, Thread):
 
         self._keyword = None
         self.objs = []
+        self.exit = False
 
         logger.info('Searcher is started.')
 
@@ -509,6 +528,7 @@ class Searcher(AbstractService, Thread):
         resp = Responser(load = False)
 
         while True:
+            if self.exit: break
             if self.objs:
                 k = [d for d in self.objs if d.clsName == self._keyword]
                 if not k: 
@@ -517,7 +537,7 @@ class Searcher(AbstractService, Thread):
 
                 text = f'已找到{self._keyword}'
                 text += f'，位於您前方{round(k[0].distance / 100)}公尺處'
-                async_play_audio(text, responser = resp, delay = 2)
+                async_play_audio(text, responser = resp)
 
                 break
 
@@ -528,6 +548,7 @@ class Navigator(Thread):
     def __init__(self, **kwargs):
         Thread.__init__(self)
         self.__dict__.update(kwargs)
+        self.exit = False
 
         logger.info('Navigator is started.')
 
@@ -538,12 +559,14 @@ class Navigator(Thread):
         
 
         for route in self.routes:
+            if self.exit: break
+
             distance = math.ceil(route['distance'])
             steps = math.ceil(distance / 61)
             duration = math.ceil(distance / 0.92)
             text = f'{route["instruction"]}，約走{distance}公尺'
 
-            async_play_audio(text, responser = resp, delay = 2)
+            async_play_audio(text, responser = resp)
             time.sleep(duration - 2 + 1)
 
 
