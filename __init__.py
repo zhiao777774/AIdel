@@ -1,4 +1,5 @@
 import sys
+import shutil
 import signal
 import time
 import cv2
@@ -6,7 +7,8 @@ import numpy as np
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
-from .file_controller import ROOT_PATH
+from .utils import logger
+from .file_controller import ROOT_PATH, AUDIO_PATH
 from .image_processor import NPImage
 from .speech_service import SpeechService, Responser
 from .detector import detect, BoundingBox
@@ -112,7 +114,10 @@ def _init_services():
     for service in serivces:
         service.setDaemon(True)
         service.start()
-        _DICT_SERVICE[type(service).__name__] = service
+
+        service_name = type(service).__name__
+        _DICT_SERVICE[service_name] = service
+        logger.info(f'{service_name} is started.')
 
 _DICT_SENSORS = {}
 def _enable_sensors():
@@ -127,7 +132,10 @@ def _enable_sensors():
     for sensor in sensors:
         sensor.setDaemon(True)
         sensor.start()
-        _DICT_SENSORS[type(sensor).__name__] = sensor
+
+        sensor_name = type(sensor).__name__
+        _DICT_SENSORS[sensor_name] = sensor
+        logger.info(f'{sensor_name} is enabled.')
 
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]
@@ -218,6 +226,7 @@ def _signal_handle():
         destroy_sensors()
         # _DICT_SERVICE['GuardianshipService'].stop()
         disconnect_environmental_model_socket()
+        shutil.rmtree(f'{AUDIO_PATH}/temp', ignore_errors = True)
         sys.exit(0)
 
     signal.signal(signal.SIGINT, _handler)
