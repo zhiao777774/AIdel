@@ -1,5 +1,6 @@
 import abc
 import os
+import shutil
 import time
 import math
 import re
@@ -10,13 +11,14 @@ import speech_recognition as sr
 import jieba
 import jieba.analyse
 import googlemaps
-from pygame import mixer
+import pygame
 from threading import Thread
 from xml.etree import ElementTree
 from enum import Enum
 
 import file_controller as fc
-from .word_vector_machine import find_synonyms
+from utils import logger
+from word_vector_machine import find_synonyms
 
 
 class AbstractService:
@@ -44,6 +46,7 @@ class ServiceType(Enum):
 class SpeechService(Thread):
     def __init__(self):
         Thread.__init__(self)
+        os.mkdir(f'{fc.AUDIO_PATH}/temp')
 
         dict_path = f'{fc.ROOT_PATH}/data/dict.txt.big.txt'
         jieba.set_dictionary(dict_path)
@@ -51,11 +54,27 @@ class SpeechService(Thread):
         keywords_path = f'{fc.ROOT_PATH}/data/triggerable_keywords.json'
         self._triggerable_keywords = fc.read_json(keywords_path)
 
+        self._mode = dict()
+
     def run(self):
         while True:
             print('Recording...')
             sentence = self.voice2text()
             if sentence == '無法翻譯': continue
+            elif sentence in ('取消導航', '停止導航', '取消尋找', '停止尋找'):
+                mode = sentence[2:]
+                if mode == '導航' and self._mode[ServiceType.NAVIGATION.name]:
+                    logger.info(f'正在停止{mode}')
+                    self.response(f'正在停止{mode}.wav')
+                    self._mode[ServiceType.NAVIGATION.name] = False
+                elif mode == '尋找' and self._mode[ServiceType.SEARCH.name]:  
+                    logger.info(f'正在停止{mode}')
+                    self.response(f'正在停止{mode}.wav')
+                    self._mode[ServiceType.SEARCH.name] = False
+                else:
+                    logger.info(f'{mode}功能未開啟')
+                    self.response(f'{mode}功能未開啟.wav')
+                continue
             '''
             keywords = [k for k in self._triggerable_keywords if k in sentence]
             triggerable = len(keywords) > 0
@@ -107,6 +126,17 @@ class SpeechService(Thread):
                 continue
             print(f'Question: {service}->{place}')
 
+            if service == ServiceType.NAVIGATION.value and \
+                self._mode[ServiceType.NAVIGATION.name]:
+                logger.info('導航功能啟動中')
+                self.response('導航功能啟動中.wav')
+                continue
+            if service == ServiceType.SEARCH.value and \
+                self._mode[ServiceType.SEARCH.name]:
+                logger.info('尋找功能啟動中')
+                self.response('尋找功能啟動中.wav')
+                continue
+
             result = ServiceType.get_service(service).execute(service, place)
             if service == ServiceType.WHETHER.value:
                 response = f'附近{"有" if result else "沒有"}{place}'
@@ -118,16 +148,24 @@ class SpeechService(Thread):
                     self.response(f'無法導航至{place}')
                     continue
 
-                print(f'-> 正在幫您導航至{place}')
-                self.response(f'正在幫您導航至{place}')
+                logger.info(f'正在取得到{place}的路線')
+                self.response(f'正在取得到{place}的路線')
 
-                navigator = Navigator(**result)
+                navigator = Navigator(**result, destination = place)
+                navigator.setDaemon(True)
                 navigator.start()
+
+                self._mode[ServiceType.NAVIGATION.name] = True
             elif service == ServiceType.SEARCH.value:
                 if result:
-                    print(f'-> 開始幫您尋找{place}')
+                    logger.info(f'開始幫您尋找{place}')
                     self.response(f'開始幫您尋找{place}')
-                    result.start()
+
+                    searcher = result
+                    searcher.setDaemon(True)
+                    searcher.start()
+
+                    self._mode[ServiceType.SEARCH.name] = True
                 else:
                     print('對不起，請您再說一次')
                     self.response('對不起，請您再說一次.wav')
@@ -136,17 +174,9 @@ class SpeechService(Thread):
         resp = Responser(load = False)
 
         if not os.path.isfile(f'{fc.AUDIO_PATH}/{text}'):
-            t = Thread(target = resp.tts, 
-                args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
-            t.start()
-            t.join()
-
-            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
-            t = Thread(target = os.remove, 
-                args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
-            t.start()
+            async_play_audio(text, responser = resp)
         else:
-            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
+            resp.play_audio(text)
 
     def voice2text(self):
         audio = None
@@ -247,6 +277,27 @@ class SpeechService(Thread):
 def _replace_and_trim(text, old, new=''):
     return text.replace(old, new).strip()
 
+def async_play_audio(text, remove = True, delay = 0, responser = None):
+    responser = responser or Responser(load = False)
+    if not isinstance(responser, Responser):
+        responser = Responser(load = False)
+
+    t = Thread(target = responser.tts, 
+        args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
+    t.start()
+    t.join()
+
+    if remove:
+        def _remove_audio():
+            time.sleep(delay)
+            try:
+                t = Thread(target = os.remove, 
+                    args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
+                t.start()
+            except PermissionError: _remove_audio()
+
+        responser.play_audio(f'temp/{text}.wav', callback = _remove_audio)
+
 
 class TextToSpeech:
     def __init__(self, subscription_key, region_identifier, input_text):
@@ -322,11 +373,14 @@ class Responser:
 
         return res[keyword]
 
-    def play_audio(self, audio_name):
-        mixer.init()
-        mixer.music.load(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
-        mixer.music.play()
-        while mixer.music.get_busy(): continue
+    def play_audio(self, audio_name, callback = None):
+        pygame.mixer.init()
+        pygame.mixer.music.load(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy(): continue
+
+        pygame.mixer.quit()
+        if callable(callback): callback()
 
     def tts(self, input_text, audio_name = ''):
         subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'
@@ -445,6 +499,8 @@ class Searcher(AbstractService, Thread):
         self._keyword = None
         self.objs = []
 
+        logger.info('Searcher is started.')
+
     def execute(self, service, keyword):
         self._keyword = keyword
         return self
@@ -461,16 +517,7 @@ class Searcher(AbstractService, Thread):
 
                 text = f'已找到{self._keyword}'
                 text += f'，位於您前方{round(k[0].distance / 100)}公尺處'
-                
-                t = Thread(target = resp.tts, 
-                    args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
-                t.start()
-                t.join()
-
-                resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
-                t = Thread(target = os.remove, 
-                    args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
-                t.start()
+                async_play_audio(text, responser = resp, delay = 2)
 
                 break
 
@@ -482,27 +529,25 @@ class Navigator(Thread):
         Thread.__init__(self)
         self.__dict__.update(kwargs)
 
+        logger.info('Navigator is started.')
+
     def run(self):
         resp = Responser(load = False)
+        logger.info(f'開始導航至{self.destination}')
+        async_play_audio(f'開始導航至{self.destination}', responser = resp)
+        
 
-        for route in self._routes:
-            distance = float(route['distance'])
+        for route in self.routes:
+            distance = math.ceil(route['distance'])
             steps = math.ceil(distance / 61)
             duration = math.ceil(distance / 0.92)
             text = f'{route["instruction"]}，約走{distance}公尺'
 
-            t = Thread(target = resp.tts, 
-                args = (text, f'{fc.AUDIO_PATH}/temp/{text}'))
-            t.start()
-            t.join()
-
-            resp.play_audio(f'{fc.AUDIO_PATH}/temp/{text}.wav')
-            t = Thread(target = os.remove, 
-                args = (f'{fc.AUDIO_PATH}/temp/{text}.wav',))
-            t.start()
-
-            time.sleep(duration + 1)
+            async_play_audio(text, responser = resp, delay = 2)
+            time.sleep(duration - 2 + 1)
 
 
 if __name__ == '__main__':
+    shutil.rmtree(f'{fc.AUDIO_PATH}/temp', ignore_errors = True)
     SpeechService().start()
+    logger.info('SpeechService is started.')
