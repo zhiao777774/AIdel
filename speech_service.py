@@ -19,6 +19,7 @@ from enum import Enum
 import utils
 import file_controller as fc
 from .word_vector_machine import find_synonyms
+from .translator import translate
 
 
 class AbstractService:
@@ -534,15 +535,27 @@ class Searcher(AbstractService, Thread):
 
             objs = utils.GLOBAL_DATASET
             if objs:
-                k = [d for d in objs if d.clsName == self._keyword]
-                if not k: 
-                    time.sleep(1)
-                    continue
+                filtered = [o for o in objs if o.clsName != 'unknown']
+                k = [o for o in filtered if translate(o.clsName) == self._keyword]
+
+                if not k:
+                    translated = [map(lambda o: translate(o.clsName), filtered)]
+
+                    for i, phrase in enumerate(translated):
+                        synonyms = list(map(lambda s: s[0], find_synonyms(phrase)))
+                        if self._keyword in synonyms:
+                            k = [filtered[i]]
+                            break
+
+                    if not k:
+                        time.sleep(1)
+                        continue
 
                 text = f'已找到{self._keyword}'
                 text += f'，位於您前方{round(k[0].distance / 100)}公尺處'
+                utils.GLOBAL_LOGGER.info(text)
+                
                 async_play_audio(text, responser = resp)
-
                 break
 
             time.sleep(1)
