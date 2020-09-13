@@ -24,7 +24,7 @@ _FOCALLEN = 14.536741214057509
 _FRAME_SIZE = (960, 720)
 _FRAME_RATE = 50
 _VIDEO_RATE = 20
-_RESOLUTION = 120
+_RESOLUTION = 60
 utils.initialize_vars()
 
 def initialize():
