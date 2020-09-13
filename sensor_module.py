@@ -8,7 +8,7 @@ from enum import IntEnum
 from serial import Serial
 from hcsr04sensor import sensor as hcsr04
 
-from .utils import AsyncTimer
+import utils
 
 
 GPIO.setmode(GPIO.BCM)
@@ -31,7 +31,7 @@ class HCSR04(Thread):
                 self._distance = None
                 continue
 
-            print(f'超音波模組偵測到距離為 {distance}cm')
+            utils.GLOBAL_LOGGER.info(f'超音波模組偵測到距離為 {distance}cm')
             self._distance = distance
 
             time.sleep(1)
@@ -60,7 +60,7 @@ class GPS(Thread):
                 lat = new_msg.latitude
                 lng = new_msg.longitude
                 
-                print(f'latitude: {str(lat)}, longitude: {str(lng)}')
+                utils.GLOBAL_LOGGER.info(f'latitude: {str(lat)}, longitude: {str(lng)}')
                 self._lat = str(lat)
                 self._lng = str(lng)
 
@@ -268,14 +268,14 @@ class EmergencyButton(Thread):
             callback = self.btn_press, bouncetime = 200)
 
     def btn_press(self):
-        timer = AsyncTimer()
+        timer = utils.AsyncTimer()
         timer.start()
 
         while GPIO.input(self.BUTTON_PIN) == 0:
             timer.stop()
 
         if timer.elapsed_time >= 1:
-            content = self._service.speech
+            content = utils.GLOBAL_SPEECH_CONTENT
             self._service.push_notification(f'緊急狀況: {content}')
         else:
             self._service.cancel = True
