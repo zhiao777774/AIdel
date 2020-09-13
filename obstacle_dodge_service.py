@@ -299,9 +299,10 @@ def generate_maze(data, width, height, resolution, benchmark=0):
 
     # setting obstacles
     for bbox in data:
+        '''
         lb = bbox.coordinates.lb
         rb = bbox.coordinates.rb
-
+        
         y = math.ceil((lb.y - benchmark + resolution) / resolution)
         for x in range(lb.x, rb.x + resolution, resolution):
             x = math.ceil(x / resolution)
@@ -309,6 +310,21 @@ def generate_maze(data, width, height, resolution, benchmark=0):
                 x -= 1
 
             maze[y][x] = MazeSymbol.OBSTACLE
+        '''
+        right_side = bbox.xCenter > width / 2
+        radius = bbox.angle * math.pi / 180
+        tangent = math.tan(radius)
+        
+        y = (row_len - 2) - (bbox.distance // resolution)
+        x = tangent if right_side else -tangent
+        x *= bbox.distance
+        x += width / 2
+        # x = -(resolution / 1.5 + (-x if right_side else x))
+        # if right_side: x = width - x
+        # if x < 0: x += width
+        x //= resolution
+
+        maze[y][x] = MazeSymbol.OBSTACLE
 
     return maze
 
