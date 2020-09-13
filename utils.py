@@ -76,5 +76,11 @@ def initialize_vars():
     global GLOBAL_SPEECH_CONTENT
     GLOBAL_SPEECH_CONTENT = ''
 
+    global GLOBAL_IMAGE
+    GLOBAL_IMAGE = None
+
+    global GLOBAL_DATASET
+    GLOBAL_DATASET = []
+
     global GLOBAL_LATLNG
     GLOBAL_LATLNG = LatLng()
