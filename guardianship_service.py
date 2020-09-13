@@ -3,17 +3,16 @@ import requests
 from threading import Thread
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+import utils
 from .image_processor import np_cvt_base64img
 from .sensor_module import Frequency
 from .db_handler import MongoDB
-from .utils import AsyncTimer
 
 
 class GuardianshipService(Thread):
     def __init__(self, interval):
         Thread.__init__(self)
 
-        self.data = dict()
         self.mpu = None
         self.buzzer = None
         self._cancel = False
@@ -29,7 +28,7 @@ class GuardianshipService(Thread):
         self._sched.add_job(self._save, 'cron', minute = period, id = 'save_image_job')
         self._sched.start()
 
-        timer = AsyncTimer()
+        timer = utils.AsyncTimer()
         pushed = False
         while True:
             if not self.mpu or not self.buzzer or self._cancel:
@@ -56,16 +55,16 @@ class GuardianshipService(Thread):
             time.sleep(0.2)
 
     def _save(self):
-        if not self.data: return
+        if not self._has_data(): return
 
         with MongoDB('120.125.83.10', '8080') as db:
             t = time.localtime()
             fdate = time.strftime('%Y/%m/%d', t)
             ftime = f'{t.tm_hour}:{"00" if t.tm_min < 30 else "30"}'
 
-            image = self.data['image']
-            lat = self.data['lat']
-            lng = self.data['lng']
+            image = utils.GLOBAL_IMAGE
+            lat = str(utils.GLOBAL_LATLNG.latitude)
+            lng = str(utils.GLOBAL_LATLNG.longitude)
             address = latlng_query_addr(lat = lat, lng = lng)
 
             insert_data = {
@@ -105,14 +104,14 @@ class GuardianshipService(Thread):
             }, _insert)
 
     def push_notification(self, noti_type):
-        if not self.data: return
+        if not self._has_data(): return
         if not isinstance(noti_type, str): return
 
         with MongoDB('120.125.83.10', '8080') as db:
             t = time.localtime()
             date = time.strftime('%Y/%m/%d %H:%M', t)
-            lat = self.data['lat']
-            lng = self.data['lng']
+            lat = str(utils.GLOBAL_LATLNG.latitude)
+            lng = str(utils.GLOBAL_LATLNG.longitude)
             address = latlng_query_addr(lat = lat, lng = lng)
 
             db.insert({
@@ -131,6 +130,11 @@ class GuardianshipService(Thread):
     def stop(self):
         self._sched.remove_job('save_image_job')
 
+    def _has_data(self):
+        return utils.GLOBAL_IMAGE \
+            and utils.GLOBAL_LATLNG.latitude \
+            and utils.GLOBAL_LATLNG.longitude
+
     @property
     def cancel(self):
         return self._cancel
@@ -141,7 +145,7 @@ class GuardianshipService(Thread):
 
         self._cancel = cancel
         if cancel:
-            timer = AsyncTimer()
+            timer = utils.AsyncTimer()
             timer.start()
 
             if timer.elapsed_time >= 10:

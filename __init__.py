@@ -69,8 +69,9 @@ def initialize():
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
         # out.write(result)
-        # _save_image(result)
 
+        utils.GLOBAL_IMAGE = frame
+        utils.GLOBAL_DATASET = bboxes
         # utils.GLOBAL_LATLNG.latitude = _DICT_SENSORS['GPS'].latitude
         # utils.GLOBAL_LATLNG.longitude = _DICT_SENSORS['GPS'].longitude
         hcsr04_distance = _DICT_SENSORS['HCSR04'].distance
@@ -216,15 +217,6 @@ def _find_contours(frame, threshold = 30):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     return _generate_bboxes(dets)
-
-def _save_image(image):
-    lat, lng = _DICT_SENSORS['GPS'].latlng()
-
-    _DICT_SERVICE['GuardianshipService'].data = {
-        'image': image,
-        'lat': lat,
-        'lng': lng
-    }
 
 def _signal_handle():
     def _handler(signal, frame):
