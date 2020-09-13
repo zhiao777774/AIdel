@@ -518,7 +518,6 @@ class Searcher(AbstractService, Thread):
         Thread.__init__(self)
 
         self._keyword = None
-        self.objs = []
         self.exit = False
 
         utils.GLOBAL_LOGGER.info('Searcher is started.')
@@ -532,8 +531,10 @@ class Searcher(AbstractService, Thread):
 
         while True:
             if self.exit: break
-            if self.objs:
-                k = [d for d in self.objs if d.clsName == self._keyword]
+
+            objs = utils.GLOBAL_DATASET
+            if objs:
+                k = [d for d in objs if d.clsName == self._keyword]
                 if not k: 
                     time.sleep(1)
                     continue
