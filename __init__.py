@@ -7,7 +7,7 @@ import numpy as np
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
-from .utils import logger
+import utils
 from .file_controller import ROOT_PATH, AUDIO_PATH
 from .image_processor import NPImage
 from .speech_service import SpeechService, Responser
@@ -25,6 +25,7 @@ _FRAME_SIZE = (960, 720)
 _FRAME_RATE = 50
 _VIDEO_RATE = 20
 _RESOLUTION = 120
+utils.initialize_vars()
 
 def initialize():
     camera = PiCamera()
@@ -43,7 +44,6 @@ def initialize():
     _signal_handle()
     _init_services()
     _enable_sensors()
-    _DICT_SENSORS['Buzzer'] = Buzzer(buzzer_pin=16)
     # _DICT_SERVICE['GuardianshipService'].mpu = _DICT_SENSORS['MPU6050']
     # _DICT_SERVICE['GuardianshipService'].buzzer = _DICT_SENSORS['Buzzer']
     
@@ -71,7 +71,10 @@ def initialize():
         # out.write(result)
         # _save_image(result)
 
+        # utils.GLOBAL_LATLNG.latitude = _DICT_SENSORS['GPS'].latitude
+        # utils.GLOBAL_LATLNG.longitude = _DICT_SENSORS['GPS'].longitude
         hcsr04_distance = _DICT_SENSORS['HCSR04'].distance
+
         if hcsr04_distance and float(hcsr04_distance) < 50:
             res_audio_file = resp.decide_response(f'stop,{float(hcsr04_distance)}')
             resp.play_audio(res_audio_file)
@@ -117,7 +120,7 @@ def _init_services():
 
         service_name = type(service).__name__
         _DICT_SERVICE[service_name] = service
-        logger.info(f'{service_name} is started.')
+        utils.GLOBAL_LOGGER.info(f'{service_name} is started.')
 
 _DICT_SENSORS = {}
 def _enable_sensors():
@@ -135,7 +138,10 @@ def _enable_sensors():
 
         sensor_name = type(sensor).__name__
         _DICT_SENSORS[sensor_name] = sensor
-        logger.info(f'{sensor_name} is enabled.')
+        utils.GLOBAL_LOGGER.info(f'{sensor_name} is enabled.')
+
+    _DICT_SENSORS['Buzzer'] = Buzzer(buzzer_pin=16)
+    utils.GLOBAL_LOGGER.info(f'{type(_DICT_SENSORS["Buzzer"]).__name__} is enabled.')
 
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]

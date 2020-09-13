@@ -16,8 +16,8 @@ from threading import Thread
 from xml.etree import ElementTree
 from enum import Enum
 
+import utils
 import file_controller as fc
-from .utils import logger
 from .word_vector_machine import find_synonyms
 
 
@@ -66,23 +66,24 @@ class SpeechService(Thread):
         while True:
             print('Recording...')
             sentence = self.voice2text()
+            utils.GLOBAL_SPEECH_CONTENT = sentence
             if sentence == '無法翻譯': continue
             elif sentence in ('取消導航', '停止導航', '取消尋找', '停止尋找'):
                 mode = sentence[2:]
                 if mode == '導航' and self._mode[ServiceType.NAVIGATION.name]:
-                    logger.info(f'正在停止{mode}')
+                    utils.GLOBAL_LOGGER.info(f'正在停止{mode}')
                     self.response(f'正在停止{mode}.wav')
                     self._mode[ServiceType.NAVIGATION.name] = False
                     self._service[ServiceType.NAVIGATION.name].exit = True
                     self._service[ServiceType.NAVIGATION.name] = None
                 elif mode == '尋找' and self._mode[ServiceType.SEARCH.name]:  
-                    logger.info(f'正在停止{mode}')
+                    utils.GLOBAL_LOGGER.info(f'正在停止{mode}')
                     self.response(f'正在停止{mode}.wav')
                     self._mode[ServiceType.SEARCH.name] = False
                     self._service[ServiceType.SEARCH.name].exit = True
                     self._service[ServiceType.SEARCH.name] = None
                 else:
-                    logger.info(f'{mode}功能未開啟')
+                    utils.GLOBAL_LOGGER.info(f'{mode}功能未開啟')
                     self.response(f'{mode}功能未開啟.wav')
                 continue
             '''
@@ -138,12 +139,12 @@ class SpeechService(Thread):
 
             if service == ServiceType.NAVIGATION.value and \
                 self._mode[ServiceType.NAVIGATION.name]:
-                logger.info('導航功能啟動中')
+                utils.GLOBAL_LOGGER.info('導航功能啟動中')
                 self.response('導航功能啟動中.wav')
                 continue
             if service == ServiceType.SEARCH.value and \
                 self._mode[ServiceType.SEARCH.name]:
-                logger.info('尋找功能啟動中')
+                utils.GLOBAL_LOGGER.info('尋找功能啟動中')
                 self.response('尋找功能啟動中.wav')
                 continue
 
@@ -158,7 +159,7 @@ class SpeechService(Thread):
                     self.response(f'無法導航至{place}')
                     continue
 
-                logger.info(f'正在取得到{place}的路線')
+                utils.GLOBAL_LOGGER.info(f'正在取得到{place}的路線')
                 self.response(f'正在取得到{place}的路線')
 
                 navigator = Navigator(**result, destination = place)
@@ -169,7 +170,7 @@ class SpeechService(Thread):
                 self._service[ServiceType.NAVIGATION.name] = navigator
             elif service == ServiceType.SEARCH.value:
                 if result:
-                    logger.info(f'開始幫您尋找{place}')
+                    utils.GLOBAL_LOGGER.info(f'開始幫您尋找{place}')
                     self.response(f'開始幫您尋找{place}')
 
                     searcher = result
@@ -491,6 +492,8 @@ class GoogleService(AbstractService):
         return result
 
     def execute(self, service, keyword):
+        # lat = utils.GLOBAL_LATLNG.latitude
+        # lng = utils.GLOBAL_LATLNG.longitude
         lat = 25.0040133
         lng = 121.3427151
 
@@ -518,7 +521,7 @@ class Searcher(AbstractService, Thread):
         self.objs = []
         self.exit = False
 
-        logger.info('Searcher is started.')
+        utils.GLOBAL_LOGGER.info('Searcher is started.')
 
     def execute(self, service, keyword):
         self._keyword = keyword
@@ -550,11 +553,11 @@ class Navigator(Thread):
         self.__dict__.update(kwargs)
         self.exit = False
 
-        logger.info('Navigator is started.')
+        utils.GLOBAL_LOGGER.info('Navigator is started.')
 
     def run(self):
         resp = Responser(load = False)
-        logger.info(f'開始導航至{self.destination}')
+        utils.GLOBAL_LOGGER.info(f'開始導航至{self.destination}')
         async_play_audio(f'開始導航至{self.destination}', responser = resp)
         
 
@@ -573,4 +576,4 @@ class Navigator(Thread):
 if __name__ == '__main__':
     shutil.rmtree(f'{fc.AUDIO_PATH}/temp', ignore_errors = True)
     SpeechService().start()
-    logger.info('SpeechService is started.')
+    utils.GLOBAL_LOGGER.info('SpeechService is started.')
