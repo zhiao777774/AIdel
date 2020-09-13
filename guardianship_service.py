@@ -16,7 +16,6 @@ class GuardianshipService(Thread):
         self.data = dict()
         self.mpu = None
         self.buzzer = None
-        self.speech = ''
         self._cancel = False
 
         self._interval = interval
