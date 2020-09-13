@@ -554,7 +554,7 @@ class Searcher(AbstractService, Thread):
                 text = f'已找到{self._keyword}'
                 text += f'，位於您前方{round(k[0].distance / 100)}公尺處'
                 utils.GLOBAL_LOGGER.info(text)
-                
+
                 async_play_audio(text, responser = resp)
                 break
 
@@ -589,5 +589,6 @@ class Navigator(Thread):
 
 if __name__ == '__main__':
     shutil.rmtree(f'{fc.AUDIO_PATH}/temp', ignore_errors = True)
+    utils.initialize_vars()
     SpeechService().start()
     utils.GLOBAL_LOGGER.info('SpeechService is started.')
