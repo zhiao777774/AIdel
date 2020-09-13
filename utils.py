@@ -1,6 +1,7 @@
 import time
 import logging
 from threading import Thread
+from dataclasses import dataclass
 
 
 class Logger:
@@ -20,8 +21,6 @@ class Logger:
 
     def critical(self, message):
         logging.critical(message)
-
-logger = Logger()       
 
 
 class Timer:
@@ -62,3 +61,20 @@ class AsyncTimer(Thread, Timer):
 
     def run(self):
         Timer.start(self)
+
+
+@dataclass
+class LatLng:
+    latitude: float = 0.0
+    longitude: float = 0.0
+
+
+def initialize_vars():
+    global GLOBAL_LOGGER
+    GLOBAL_LOGGER = Logger()
+    
+    global GLOBAL_SPEECH_CONTENT
+    GLOBAL_SPEECH_CONTENT = ''
+
+    global GLOBAL_LATLNG
+    GLOBAL_LATLNG = LatLng()
