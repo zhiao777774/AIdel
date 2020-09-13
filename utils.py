@@ -4,12 +4,11 @@ from threading import Thread
 from dataclasses import dataclass
 
 
+logging.basicConfig(
+    format = '%(asctime)s : %(levelname)s : %(message)s', 
+    level = logging.INFO)
+
 class Logger:
-    def __init__(self):
-        logging.basicConfig(
-            format = '%(asctime)s : %(levelname)s : %(message)s', 
-            level = logging.INFO)
-    
     def info(self, message):
         logging.info(message)
 
