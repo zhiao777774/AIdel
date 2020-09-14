@@ -19,30 +19,35 @@ class NPImage:
         _, binary = cv2.threshold(self.frame, 127, 255, cv2.THRESH_BINARY)
         self._frame = binary
     
-    def morphologyEx(self, type_ = cv2.MORPH_OPEN):
-        if type_ not in (cv2.MORPH_OPEN, cv2.MORPH_CLOSE):
+    def morphologyEx(self, mode = cv2.MORPH_OPEN, kernel = None):
+        if mode not in (cv2.MORPH_OPEN, cv2.MORPH_CLOSE):
             raise BaseException('type only can be MORPH_OPEN or MORPH_CLOSE')
 
-        kernel = np.ones((3, 3), np.uint8)
-        self._frame = cv2.morphologyEx(self.frame, type_, kernel)
+        kernel = kernel or np.ones((3, 3), np.uint8)
+        self._frame = cv2.morphologyEx(self.frame, mode, kernel)
         
-    def dilate(self, nIter = 1):
-        kernel = np.ones((3, 3), np.uint8)
+    def dilate(self, nIter = 1, kernel = None):
+        kernel = kernel or np.ones((3, 3), np.uint8)
         self._frame = cv2.dilate(self.frame, kernel, iterations = nIter)
         
-    def erode(self, nIter = 1):
-        kernel = np.ones((3, 3), np.uint8)
+    def erode(self, nIter = 1, kernel = None):
+        kernel = kernel or np.ones((3, 3), np.uint8)
         self._frame = cv2.erode(self.frame, kernel, iterations = nIter)
 
     def blur(self):
         self._frame = cv2.GaussianBlur(self.frame, (11, 11), 0)
 
+    def canny(self, lower, upper):
+        self._frame = cv2.Canny(self.frame, lower, upper)
+
     def find_contours(self):
         self.rgb2gray()
-        self.blur()
-        edged = cv2.Canny(self.frame, 30, 150)
+        self.threshold()
+        self.erode()
+        # self.blur()
+        # self.canny(lower = 30, upper = 150)
 
-        _, contours, _ = cv2.findContours(edged, 
+        _, contours, _ = cv2.findContours(self.frame, 
             cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         return contours
