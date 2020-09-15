@@ -316,6 +316,8 @@ def generate_maze(data, width, height, resolution, benchmark=0):
         tangent = math.tan(radius)
         
         y = (row_len - 2) - (bbox.distance // resolution)
+        if y < 2: y = 2
+        
         x = tangent if right_side else -tangent
         x *= bbox.distance
         x += width / 2
