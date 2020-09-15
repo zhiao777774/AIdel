@@ -109,7 +109,9 @@ class SpeechService(Thread):
 
             if not service:
                 for i, tag in enumerate(keywords):
-                    synonyms = list(map(lambda s: s[0], find_synonyms(tag)))
+                    try:
+                        synonyms = list(map(lambda s: s[0], find_synonyms(tag)))
+                    except KeyError: continue
                     results = [k for k in ServiceType if k.value in synonyms]
                     if results: 
                         service = results
@@ -149,7 +151,12 @@ class SpeechService(Thread):
                 self.response('尋找功能啟動中.wav')
                 continue
 
-            result = ServiceType.get_service(service).execute(service, place)
+            try:
+                result = ServiceType.get_service(service).execute(service, place)
+            except: 
+                print('功能錯誤，請再試一次')
+                self.response('功能錯誤，請再試一次.wav')
+                continue
             if service == ServiceType.WHETHER.value:
                 response = f'附近{"有" if result else "沒有"}{place}'
                 print(f'-> {response}')
