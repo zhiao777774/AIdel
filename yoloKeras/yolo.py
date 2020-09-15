@@ -502,9 +502,11 @@ def detect_realtime(yolo, output_path = ''):
         dets = []
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        blured = cv2.GaussianBlur(gray, (11, 11), 0)
-        edged = cv2.Canny(blured, 30, 150)
-        contours, _ = cv2.findContours(edged, 
+        _, thres = cv2.threshold(gray, 125, 255, cv2.THRESH_BINARY)
+        erode = cv2.erode(thres, np.ones((3, 3), np.uint8), iterations = 1)
+        # blured = cv2.GaussianBlur(erode, (11, 11), 0)
+        # edged = cv2.Canny(blured, 30, 150)
+        contours, _ = cv2.findContours(erode, 
             cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
 
@@ -573,7 +575,7 @@ def detect_realtime(yolo, output_path = ''):
         if bboxes: 
             h = int(result.shape[0] / 2)
             maze = generate_maze(data = bboxes, height = h, width = w,
-                benchmark = h, resolution = 90)
+                benchmark = h, resolution = 60)
             maze = Maze(maze)
 
             try:
