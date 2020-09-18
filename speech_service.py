@@ -19,7 +19,7 @@ from enum import Enum
 import utils
 import file_controller as fc
 from .word_vector_machine import find_synonyms
-from .translator import translate
+from .translator import google_translate
 
 
 class AbstractService:
@@ -543,10 +543,10 @@ class Searcher(AbstractService, Thread):
             objs = utils.GLOBAL_DATASET
             if objs:
                 filtered = [o for o in objs if o.clsName != 'unknown']
-                k = [o for o in filtered if translate(o.clsName) == self._keyword]
+                k = [o for o in filtered if google_translate(o.clsName) == self._keyword]
 
                 if not k:
-                    translated = [map(lambda o: translate(o.clsName), filtered)]
+                    translated = [map(lambda o: google_translate(o.clsName), filtered)]
 
                     for i, phrase in enumerate(translated):
                         synonyms = list(map(lambda s: s[0], find_synonyms(phrase)))
