@@ -62,9 +62,11 @@ def initialize():
         if dets or bboxes:
             bboxes = _calc_distance(result, dets, bboxes)
             bboxes = _calc_angle(result, bboxes)
+            '''
             create_environmental_model(
                 file_path = f'{ROOT_PATH}/data/environmentalModel.json',
                 image = result, resolution = _RESOLUTION, bboxes = bboxes)
+            '''
 
         cv2.namedWindow('result', cv2.WINDOW_NORMAL)
         cv2.imshow('result', result)
