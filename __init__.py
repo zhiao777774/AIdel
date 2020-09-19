@@ -17,6 +17,7 @@ from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .guardianship_service import GuardianshipService
 from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, Frequency, EmergencyButton, destroy_sensors
+# from .beacon_scanner import BeaconScanner
 
 
 _CALIBRATION_DISTANCE = 35
@@ -114,7 +115,8 @@ _DICT_SERVICE = {}
 def _init_services():
     serivces = [
         SpeechService(),
-        # GuardianshipService(interval=6)
+        # GuardianshipService(interval=6),
+        # BeaconScanner()
     ]
 
     for service in serivces:
