@@ -11,8 +11,11 @@ class NPImage:
     def __init__(self, frame):
         self._frame = frame.copy()
         self._original = frame.copy()
+
+    def cvt_rgb(self):
+        self._frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
         
-    def rgb2gray(self):
+    def cvt_gray(self):
         self._frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
     
     def threshold(self):
@@ -41,7 +44,7 @@ class NPImage:
         self._frame = cv2.Canny(self.frame, lower, upper)
 
     def find_contours(self):
-        self.rgb2gray()
+        self.cvt_gray()
         self.threshold()
         self.erode()
         # self.blur()
