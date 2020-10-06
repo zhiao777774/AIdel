@@ -277,6 +277,7 @@ def generate_maze(data, width, height, resolution, benchmark=0):
     row_len += 1  # adding default row (for user)
     row_len += 1  # adding default row (for wall)
     col_len = int(width / resolution) + 1
+    col_len += 1  # adding default column (for road)
     col_len += 1  # adding default column (for wall)
 
     if col_len % 2 != 0:
@@ -299,7 +300,7 @@ def generate_maze(data, width, height, resolution, benchmark=0):
 
     # setting obstacles
     for bbox in data:
-        '''
+        
         lb = bbox.coordinates.lb
         rb = bbox.coordinates.rb
         
@@ -327,6 +328,7 @@ def generate_maze(data, width, height, resolution, benchmark=0):
         x //= resolution
 
         maze[y][x] = MazeSymbol.OBSTACLE
+        '''
 
     return maze
 
