@@ -42,9 +42,9 @@ def digit_recognize(frame):
     image.erode(nIter = 5)
     image.cvt_gray()
     gray = image.frame.copy()
-    image.canny(lower = 50, upper = 200, edges = 255)
 
     cnts = []
+	image.canny(lower = 50, upper = 200, edges = 255)
     contours, _ = cv2.findContours(image.frame, 
         cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
@@ -109,7 +109,7 @@ def digit_recognize(frame):
     	# lookup the digit and draw it on the image
     	try:
     		digit = DIGITS_LOOKUP[tuple(on)]
-            digits.appebd(digit)
+            digits.append(digit)
     	except KeyError:
     		continue
 
