@@ -40,8 +40,8 @@ class NPImage:
     def blur(self):
         self._frame = cv2.GaussianBlur(self.frame, (11, 11), 0)
 
-    def canny(self, lower, upper):
-        self._frame = cv2.Canny(self.frame, lower, upper)
+    def canny(self, lower, upper, edges = None):
+        self._frame = cv2.Canny(self.frame, lower, upper, edges)
 
     def find_contours(self):
         self.cvt_gray()
