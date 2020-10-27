@@ -20,6 +20,7 @@ import utils
 import file_controller as fc
 from .word_vector_machine import find_synonyms
 from .translator import google_translate
+from .text_recognizer import text_recognize
 
 
 class AbstractService:
@@ -68,6 +69,7 @@ class SpeechService(Thread):
             print('Recording...')
             sentence = self.voice2text()
             utils.GLOBAL_SPEECH_CONTENT = sentence
+
             if sentence == '無法翻譯': continue
             elif sentence in ('取消導航', '停止導航', '取消尋找', '停止尋找'):
                 mode = sentence[2:]
@@ -86,6 +88,17 @@ class SpeechService(Thread):
                 else:
                     utils.GLOBAL_LOGGER.info(f'{mode}功能未開啟')
                     self.response(f'{mode}功能未開啟.wav')
+                continue
+            elif sentence == '這個是什麼':
+                result = text_recognize(utils.GLOBAL_IMAGE)
+                result = [map(lambda s: _replace_and_trim(s, ' '), result)]
+                result = self.extract_keywords(result)
+                result = self.filter_keywords(result, 5)
+
+                keyword = ''
+                response = f'這個是{keyword}'
+                utils.GLOBAL_LOGGER.info(response)
+                async_play_audio(response, responser = Responser(load = False))
                 continue
             '''
             keywords = [k for k in self._triggerable_keywords if k in sentence]
