@@ -18,6 +18,7 @@ from .environmental_model import create_environmental_model, disconnect_environm
 from .guardianship_service import GuardianshipService
 from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, Frequency, EmergencyButton, destroy_sensors
 # from .beacon_scanner import BeaconScanner
+from .chatbot.chatbot_client import ChatbotClient
 
 
 _CALIBRATION_DISTANCE = 35
@@ -27,6 +28,8 @@ _FRAME_RATE = 50
 _VIDEO_RATE = 20
 _RESOLUTION = 60
 utils.initialize_vars()
+
+_CHATBOT_CLIENT = ChatbotClient()
 
 def initialize():
     camera = PiCamera()
@@ -82,6 +85,7 @@ def initialize():
         if hcsr04_distance and float(hcsr04_distance) < 50:
             res_audio_file = resp.decide_response(f'stop,{float(hcsr04_distance)}')
             resp.play_audio(res_audio_file)
+            _CHATBOT_CLIENT.send('stop')
             _DICT_SENSORS['Buzzer'].buzz(Frequency.ALERT, 0.2, 1)
             
             _truncate_frame()
@@ -104,6 +108,7 @@ def initialize():
             print(dirs)
             res_audio_file = resp.decide_response(f'{dirs[0]},{bboxes[0].distance}')
             resp.play_audio(res_audio_file)
+            _CHATBOT_CLIENT.send(dirs[0])
 
             if dirs[0] in ('v', 'stop'):
                 _DICT_SENSORS['Buzzer'].buzz(Frequency.ALERT, 0.2, 1)
@@ -228,6 +233,7 @@ def _signal_handle():
         destroy_sensors()
         # _DICT_SERVICE['GuardianshipService'].stop()
         disconnect_environmental_model_socket()
+        _CHATBOT_CLIENT.close()
         shutil.rmtree(f'{AUDIO_PATH}/temp', ignore_errors = True)
         sys.exit(0)
 
