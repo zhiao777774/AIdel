@@ -114,7 +114,7 @@ class MPU6050(Thread):
         else:
             return val
     
-    def _dist(self, a,b):
+    def _dist(self, a, b):
         return math.sqrt((a * a) + (b * b))
     
     def _get_y_rotation(self, x, y, z):
