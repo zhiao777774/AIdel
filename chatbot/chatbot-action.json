@@ -1,0 +1,22 @@
+{
+    "^": {
+        "number": 1,
+        "sleeptime": 1200
+    },
+    "<": {
+        "number": 3,
+        "sleeptime": 600
+    },
+    ">": {
+        "number": 4,
+        "sleeptime": 350
+    },
+    "v": {
+        "number": 2,
+        "sleeptime": 1600
+    },
+    "stop": {
+        "number": 0,
+        "sleeptime": 1200
+    }
+}

@@ -3,7 +3,6 @@ import serial
 import time
 import json
 from threading import Thread
-from multiprocessing.connection import Listener
 
 from .infrared_sensor import InfraredSensor
 
@@ -12,8 +11,8 @@ class Chatbot(Thread):
     def __init__(self, port):
         Thread.__init__(self)
 
+        self._send_data = None
         self._seri_port = serial.Serial(port, baudrate = 9600, timeout = 1.0)
-        self._listener = Listener(address = ('localhost', 6000), authkey = 'aidelcharbot')
 
         action_data_path = f'{os.path.dirname(os.path.realpath(__file__))}/chatbot-action.json'
         with open(action_data_path , 'r', encoding = 'UTF-8') as reader:
@@ -22,15 +21,10 @@ class Chatbot(Thread):
         InfraredSensor(port = self._seri_port, func = self._infrared_control).start()
 
     def run(self):
-        conn = self._listener.accept()
-
         while True:
-            msg = conn.recv()
+            msg = self._send_data or ''
 
             if msg in ('close', 'stop'):
-                conn.close()
-                self._listener.close()
-
                 data = self._action_data['stop']
                 self._seri_port.write(str(data['number']).encode())
                 break
@@ -63,3 +57,6 @@ class Chatbot(Thread):
 
         if sleep_time > 1000:
             time.sleep((sleep_time - 1000) / 1000)
+
+    def act(self, msg):
+        self._send_data = msg
