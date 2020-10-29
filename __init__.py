@@ -29,7 +29,7 @@ _VIDEO_RATE = 20
 _RESOLUTION = 60
 utils.initialize_vars()
 
-_CHATBOT_CLIENT = ChatbotClient()
+_CHATBOT_CLIENT = ChatbotClient(port = '/dev/ttyAMA0')
 
 def initialize():
     camera = PiCamera()

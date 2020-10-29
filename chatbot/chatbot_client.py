@@ -2,8 +2,8 @@ from .ai_chatbot import Chatbot
 
 
 class ChatbotClient:
-    def __init__(self):
-        self._chatbot = Chatbot(port = '/dev/ttyAMA0')
+    def __init__(self, port):
+        self._chatbot = Chatbot(port)
         self._chatbot.setDaemon(True)
         self._chatbot.start()
 
