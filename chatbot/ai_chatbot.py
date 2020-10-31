@@ -4,7 +4,8 @@ import time
 import json
 from threading import Thread
 
-from .infrared_sensor import InfraredSensor
+from .. import utils
+# from .infrared_sensor import InfraredSensor
 
 
 class Chatbot(Thread):
@@ -18,20 +19,25 @@ class Chatbot(Thread):
         with open(action_data_path , 'r', encoding = 'UTF-8') as reader:
             self._action_data = json.loads(reader.read())
 
-        InfraredSensor(port = self._seri_port, func = self._infrared_control).start()
+        # InfraredSensor(port = self._seri_port, func = self._infrared_control).start()
+        # utils.GLOBAL_LOGGER.info(f'Infrared sensor is enabled.')
 
     def run(self):
+        utils.GLOBAL_LOGGER.info(f'Chatbot is enabled.')
+
         while True:
-            msg = self._send_data or ''
+            msg = self._send_data or '^'
 
             if msg in ('close', 'stop'):
                 data = self._action_data['stop']
                 self._seri_port.write(str(data['number']).encode())
+                self._seri_port.close()
                 break
-            elif self._action_data[msg]:
+            elif msg in self._action_data.keys():
                 data = self._action_data[msg]
                 self._seri_port.write(str(data['number']).encode())
 
+                self._send_data = None
                 time.sleep(data['sleeptime'] / 1000)
             else:
                 time.sleep(1)
