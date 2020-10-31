@@ -34,24 +34,24 @@ def text_recognize(frame, target = 'chi_tra+eng', min_conf = None):
     return None
 
 def digit_recognize(frame):
-    image = NPImage(frame.copy())
-    image.cvt_rgb()
-    image.blur()
-    image.threshold()
-    image.dilate(nIter = 5)
-    image.erode(nIter = 5)
-    image.cvt_gray()
-    gray = image.frame.copy()
-
-    cnts = []
+	image = NPImage(frame.copy())
+	image.cvt_rgb()
+	image.blur()
+	image.threshold()
+	image.dilate(nIter = 5)
+	image.erode(nIter = 5)
+	image.cvt_gray()
+	gray = image.frame.copy()
+	
+	cnts = []
 	image.canny(lower = 50, upper = 200, edges = 255)
-    contours, _ = cv2.findContours(image.frame, 
-        cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in contours:
-	    area = cv2.contourArea(cnt)
-	    if 500 <= area <= 5000: cnts.append(cnt)
-
-    DIGITS_LOOKUP = {
+	contours, _ = cv2.findContours(image.frame, 
+		cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	for cnt in contours:
+		area = cv2.contourArea(cnt)
+		if 500 <= area <= 5000: cnts.append(cnt)
+		
+	DIGITS_LOOKUP = {
 	    (1, 1, 1, 0, 1, 1, 1): 0,
 	    (0, 0, 1, 0, 0, 1, 0): 1,
 	    (1, 0, 1, 1, 1, 1, 0): 2,
@@ -63,27 +63,27 @@ def digit_recognize(frame):
 	    (1, 1, 1, 1, 1, 1, 1): 8,
 	    (1, 1, 1, 1, 0, 1, 1): 9
     }
-
-    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-
-    digits = []
-    # loop over each of the digits
-    for i, c in enumerate(cnts):
-    	# extract the digit ROI
-    	(x, y, w, h) = cv2.boundingRect(c)
-    	roi = thresh[y:y + h, x:x + w]
-    	kernel = np.ones((3, 3), np.uint8)
-    	roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, kernel)
-    	roi = cv2.dilate(roi, np.ones((3, 3), np.uint8), iterations = 1)
-
-    	# compute the width and height of each of the 7 segments
-    	# we are going to examine
-    	(roiH, roiW) = roi.shape
-    	(dW, dH) = (int(roiW * 0.25), int(roiH * 0.15))
-    	dHC = int(roiH * 0.05)
-    	# define the set of 7 segments
-    	segments = [
+	
+	_, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
+	thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+	
+	digits = []
+	# loop over each of the digits
+	for i, c in enumerate(cnts):
+		# extract the digit ROI
+		(x, y, w, h) = cv2.boundingRect(c)
+		roi = thresh[y:y + h, x:x + w]
+		kernel = np.ones((3, 3), np.uint8)
+		roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, kernel)
+		roi = cv2.dilate(roi, np.ones((3, 3), np.uint8), iterations = 1)
+		
+		# compute the width and height of each of the 7 segments
+		# we are going to examine
+		(roiH, roiW) = roi.shape
+		(dW, dH) = (int(roiW * 0.25), int(roiH * 0.15))
+		dHC = int(roiH * 0.05)
+		# define the set of 7 segments
+		segments = [
     		((0, 0), (w, dH)),	# top
     		((0, 0), (dW, h // 2)),	# top-left
     		((w - dW, 0), (w, h // 2)),	# top-right

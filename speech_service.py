@@ -20,7 +20,7 @@ import utils
 import file_controller as fc
 from .word_vector_machine import find_synonyms
 from .translator import google_translate
-from .text_recognizer import text_recognize
+# from .text_recognizer import text_recognize
 
 
 class AbstractService:
