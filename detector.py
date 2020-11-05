@@ -1,20 +1,20 @@
 import math
 from collections import namedtuple
 
-import yoloKeras.yolo as yolo
+# import yoloKeras.yolo as yolo
+import yoloTensorflow.yolo as yolo
 import file_controller as fc
 
-
+'''
 MODEL_PATH = f'{fc.ROOT_PATH}/yoloKeras/model_data'
-'''
-_model = yolo.YOLO(
-    model_path = f'{MODEL_PATH}/aidel.weights.h5',
-    anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt',
-    classes_path = f'{MODEL_PATH}/aidel_classes.txt')
-'''
+
 _model = yolo.YOLO(
     model_path = f'{MODEL_PATH}/tiny_yolo_weights.h5',
     anchors_path = f'{MODEL_PATH}/tiny_yolo_anchors.txt')
+'''
+MODEL_PATH = f'{fc.ROOT_PATH}/yoloTensorflow/data'
+_model = yolo.YOLO(
+        model_path = f'{MODEL_PATH}/yolov4-tiny-416.tflite', tiny=True)
 
 def detect(frame):
     image, dets = yolo.detect(_model, frame)
