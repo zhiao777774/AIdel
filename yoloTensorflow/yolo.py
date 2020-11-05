@@ -28,7 +28,7 @@ class YOLO:
         'model': 'yolov4',
         'score': 0.3,
         'iou': 0.45,
-        'model_image_size': 416
+        'model_image_size': (416, 416)
     }
 
     def __init__(self, **kwargs):
@@ -52,7 +52,7 @@ class YOLO:
         input_size = self.model_image_size
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image_data = cv2.resize(image, (input_size, input_size))
+        image_data = cv2.resize(image, input_size)
         image_data = image_data / 255.
         images_data = [image_data]
         images_data = np.asarray(images_data).astype(np.float32)
@@ -64,10 +64,10 @@ class YOLO:
                 for i in range(len(self.output_details))]
         if self.model == 'yolov3' and self.tiny == True:
             boxes, pred_conf = filter_boxes(
-                pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                pred[1], pred[0], score_threshold=0.25, input_shape=tf.constant([input_size]))
         else:
             boxes, pred_conf = filter_boxes(
-                pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size, input_size]))
+                pred[0], pred[1], score_threshold=0.25, input_shape=tf.constant([input_size]))
 
         boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
             boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
