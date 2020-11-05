@@ -90,12 +90,14 @@ class SpeechService(Thread):
                     self.response(f'{mode}功能未開啟.wav')
                 continue
             elif sentence == '這個是什麼':
-                result = text_recognize(utils.GLOBAL_IMAGE)
-                result = [map(lambda s: _replace_and_trim(s, ' '), result)]
-                result = self.extract_keywords(result)
-                result = self.filter_keywords(result, 5)
+                results = []
+                # results = text_recognize(utils.GLOBAL_IMAGE)
+                # results = [map(lambda s: _replace_and_trim(s, ' '), results)]
+                # results = self.extract_keywords(results)
+                # results = self.filter_keywords(results, 5)
+                # results = [tag for tag, _ in results]
 
-                keyword = ''
+                keyword = ''.join(results)
                 response = f'這個是{keyword}'
                 utils.GLOBAL_LOGGER.info(response)
                 async_play_audio(response, responser = Responser(load = False))
