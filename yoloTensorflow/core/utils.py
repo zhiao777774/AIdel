@@ -162,7 +162,8 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), show_la
             cv2.putText(image, bbox_mess, (c1[0], np.float32(c1[1] - 2)), cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
         
-        objs.append((classes[class_ind], round(score, 2), (coor[1], coor[0], coor[3], coor[2])))
+        objs.append((classes[class_ind], round(score, 2), 
+                (int(coor[1]), int(coor[0]), int(coor[3]), int(coor[2]))))
 
     return image, objs
 
