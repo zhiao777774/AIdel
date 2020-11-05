@@ -12,4 +12,6 @@ yolo_weights.h5
 yolov4.weights
 yolov4-416.tflite
 
+yolov4-416/
+
 *.npy
