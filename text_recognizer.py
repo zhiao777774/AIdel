@@ -92,25 +92,25 @@ def digit_recognize(frame):
     		((w - dW, h // 2), (w, h)),	# bottom-right
     		((0, h - dH), (w, h))	# bottom
     	]
-    	on = [0] * len(segments)
-
-    	# loop over the segments
-    	for (i, ((xA, yA), (xB, yB))) in enumerate(segments):
+		on = [0] * len(segments)
+		
+		# loop over the segments
+		for (i, ((xA, yA), (xB, yB))) in enumerate(segments):
     		# extract the segment ROI, count the total number of
     		# thresholded pixels in the segment, and then compute
-    		# the area of the segment
-    		segROI = roi[yA:yB, xA:xB]
-    		total = cv2.countNonZero(segROI)
-    		area = (xB - xA) * (yB - yA)
+			# the area of the segment
+			segROI = roi[yA:yB, xA:xB]
+			total = cv2.countNonZero(segROI)
+			area = (xB - xA) * (yB - yA)
     		# if the total number of non-zero pixels is greater than
-    		# 50% of the area, mark the segment as "on"
-    		if total / float(area) > 0.5:
-    			on[i]= 1
+			# 50% of the area, mark the segment as "on"
+			if total / float(area) > 0.5:
+				on[i]= 1
     	# lookup the digit and draw it on the image
-    	try:
-    		digit = DIGITS_LOOKUP[tuple(on)]
-            digits.append(digit)
-    	except KeyError:
-    		continue
-
-    return digits
+		try:
+			digit = DIGITS_LOOKUP[tuple(on)]
+		except KeyError:
+			continue
+		digits.append(digit)
+		
+	return digits
