@@ -5,8 +5,8 @@ import tensorflow as tf
 import platform
 from PIL import Image
 
-import core.utils as utils
-from core.yolov4 import filter_boxes
+from .core.utils import draw_bbox
+from .core.yolov4 import filter_boxes
 
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -81,7 +81,7 @@ class YOLO:
 
         pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(),
                      valid_detections.numpy()]
-        image, objs = utils.draw_bbox(image, pred_bbox)
+        image, objs = draw_bbox(image, pred_bbox)
         image = Image.fromarray(image.astype(np.uint8))
         image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB)
 

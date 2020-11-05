@@ -6,8 +6,8 @@ import cv2
 import random
 import numpy as np
 import tensorflow as tf
-import core.utils as utils
-from core.config import cfg
+from .utils import load_config, read_class_names, image_preprocess, bbox_iou
+from .config import cfg
 
 
 class Dataset(object):
@@ -15,7 +15,7 @@ class Dataset(object):
 
     def __init__(self, FLAGS, is_training: bool, dataset_type: str = "converted_coco"):
         self.tiny = FLAGS.tiny
-        self.strides, self.anchors, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
+        self.strides, self.anchors, NUM_CLASS, XYSCALE = load_config(FLAGS)
         self.dataset_type = dataset_type
 
         self.annot_path = (
@@ -30,7 +30,7 @@ class Dataset(object):
         self.data_aug = cfg.TRAIN.DATA_AUG if is_training else cfg.TEST.DATA_AUG
 
         self.train_input_sizes = cfg.TRAIN.INPUT_SIZE
-        self.classes = utils.read_class_names(cfg.YOLO.CLASSES)
+        self.classes = read_class_names(cfg.YOLO.CLASSES)
         self.num_classes = len(self.classes)
         self.anchor_per_scale = cfg.YOLO.ANCHOR_PER_SCALE
         self.max_bbox_per_scale = 150
@@ -279,7 +279,7 @@ class Dataset(object):
             )
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image, bboxes = utils.image_preprocess(
+        image, bboxes = image_preprocess(
             np.copy(image),
             [self.train_input_size, self.train_input_size],
             np.copy(bboxes),
@@ -334,7 +334,7 @@ class Dataset(object):
                 )
                 anchors_xywh[:, 2:4] = self.anchors[i]
 
-                iou_scale = utils.bbox_iou(
+                iou_scale = bbox_iou(
                     bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh
                 )
                 iou.append(iou_scale)
