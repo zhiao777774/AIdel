@@ -1,3 +1,4 @@
+import abc
 import time
 import math
 import smbus
@@ -11,30 +12,31 @@ from hcsr04sensor import sensor as hcsr04
 import utils
 
 
+class ISensor:
+    @abc.abstractmethod
+    def read_data(self):
+        return NotImplemented
+
+
 GPIO.setmode(GPIO.BCM)
 # 超音波模組
-class HCSR04(Thread):
+class HCSR04(ISensor):
     def __init__(self, trigger_pin, echo_pin):
-        Thread.__init__(self)
-
         self.TRIGGER_PIN = trigger_pin
         self.ECHO_PIN = echo_pin
         self._distance = None
 
-    def run(self):
-        while True:
-            try:
-                sr04 = hcsr04.Measurement(self.TRIGGER_PIN, self.ECHO_PIN)
-                raw_measurement = sr04.raw_distance()
-                distance = sr04.distance_metric(raw_measurement)
-            except (UnboundLocalError, SystemError):
-                self._distance = None
-                continue
+    def read_data(self):
+        try:
+            sr04 = hcsr04.Measurement(self.TRIGGER_PIN, self.ECHO_PIN)
+            raw_measurement = sr04.raw_distance()
+            distance = sr04.distance_metric(raw_measurement)
+        except (UnboundLocalError, SystemError):
+            self._distance = None
+            return
 
-            utils.GLOBAL_LOGGER.info(f'超音波模組偵測到距離為 {distance}cm')
-            self._distance = distance
-
-            time.sleep(1)
+        utils.GLOBAL_LOGGER.info(f'超音波模組偵測到距離為 {distance}cm')
+        self._distance = distance
 
     @property
     def distance(self):
@@ -42,29 +44,24 @@ class HCSR04(Thread):
 
 
 # GPS模組
-class GPS(Thread):
+class GPS(ISensor):
     def __init__(self, port = '/dev/ttyAMA0'):
-        Thread.__init__(self)
-
         self._port = port
         self._lat = None
         self._lng = None
 
-    def run(self):
-        while True:
-            ser = Serial(self._port, baudrate=9600, timeout=0.5)
-            new_data = ser.readline()
+    def read_data(self):
+        ser = Serial(self._port, baudrate=9600, timeout=0.5)
+        new_data = ser.readline()
+        
+        if new_data[:6] == '$GPRMC':
+            new_msg = pynmea2.parse(new_data)
+            lat = new_msg.latitude
+            lng = new_msg.longitude
             
-            if new_data[:6] == '$GPRMC':
-                new_msg = pynmea2.parse(new_data)
-                lat = new_msg.latitude
-                lng = new_msg.longitude
-                
-                utils.GLOBAL_LOGGER.info(f'latitude: {str(lat)}, longitude: {str(lng)}')
-                self._lat = str(lat)
-                self._lng = str(lng)
-
-                time.sleep(1)
+            utils.GLOBAL_LOGGER.info(f'latitude: {str(lat)}, longitude: {str(lng)}')
+            self._lat = str(lat)
+            self._lng = str(lng)
 
     def latlng(self):
         return self._lat, self._lng
@@ -79,10 +76,8 @@ class GPS(Thread):
 
 
 # 陀螺儀與加速度感測模組
-class MPU6050(Thread):
+class MPU6050(ISensor):
     def __init__(self):
-        Thread.__init__(self)
-        
         self._bus = smbus.SMBus(1)
         self._power_mgmt = 0x6b
         self._address = 0x68
@@ -125,64 +120,60 @@ class MPU6050(Thread):
         radians = math.atan2(y, self._dist(x, z))
         return math.degrees(radians)
 
-    def run(self):
-        while True:
-            try:
-                self._bus.write_byte_data(self._address, self._power_mgmt, 0)
+    def read_data(self):
+        try:
+            self._bus.write_byte_data(self._address, self._power_mgmt, 0)
 
-                gyroskop_xout = self._read_word_2c(0x43)
-                gyroskop_yout = self._read_word_2c(0x45)
-                gyroskop_zout = self._read_word_2c(0x47)
+            gyroskop_xout = self._read_word_2c(0x43)
+            gyroskop_yout = self._read_word_2c(0x45)
+            gyroskop_zout = self._read_word_2c(0x47)
 
-                beschleunigung_xout = self._read_word_2c(0x3b)
-                beschleunigung_yout = self._read_word_2c(0x3d)
-                beschleunigung_zout = self._read_word_2c(0x3f)
-            except OSError:
-                time.sleep(1)
-                continue
+            beschleunigung_xout = self._read_word_2c(0x3b)
+            beschleunigung_yout = self._read_word_2c(0x3d)
+            beschleunigung_zout = self._read_word_2c(0x3f)
+        except OSError:
+            return
 
-            print('Gyroskop')
-            print('--------')
+        print('Gyroskop')
+        print('--------')
 
-            gyroskop_xout_skaliert = gyroskop_xout / 131
-            gyroskop_yout_skaliert = gyroskop_yout / 131
-            gyroskop_zout_skaliert = gyroskop_zout / 131
+        gyroskop_xout_skaliert = gyroskop_xout / 131
+        gyroskop_yout_skaliert = gyroskop_yout / 131
+        gyroskop_zout_skaliert = gyroskop_zout / 131
 
-            print('gyroskop_xout: ', ('%5d' % gyroskop_xout), ' skaliert: ', gyroskop_xout_skaliert)
-            print('gyroskop_yout: ', ('%5d' % gyroskop_yout), ' skaliert: ', gyroskop_yout_skaliert)
-            print('gyroskop_zout: ', ('%5d' % gyroskop_zout), ' skaliert: ', gyroskop_zout_skaliert)
-            
-            self._gyroskop_xout = gyroskop_xout
-            self._gyroskop_yout = gyroskop_yout
-            self._gyroskop_zout = gyroskop_zout
+        print('gyroskop_xout: ', ('%5d' % gyroskop_xout), ' skaliert: ', gyroskop_xout_skaliert)
+        print('gyroskop_yout: ', ('%5d' % gyroskop_yout), ' skaliert: ', gyroskop_yout_skaliert)
+        print('gyroskop_zout: ', ('%5d' % gyroskop_zout), ' skaliert: ', gyroskop_zout_skaliert)
+        
+        self._gyroskop_xout = gyroskop_xout
+        self._gyroskop_yout = gyroskop_yout
+        self._gyroskop_zout = gyroskop_zout
 
-            print()
-            print('Beschleunigungssensor')
-            print('---------------------')
+        print()
+        print('Beschleunigungssensor')
+        print('---------------------')
 
-            beschleunigung_xout_skaliert = beschleunigung_xout / 16384.0
-            beschleunigung_yout_skaliert = beschleunigung_yout / 16384.0
-            beschleunigung_zout_skaliert = beschleunigung_zout / 16384.0
+        beschleunigung_xout_skaliert = beschleunigung_xout / 16384.0
+        beschleunigung_yout_skaliert = beschleunigung_yout / 16384.0
+        beschleunigung_zout_skaliert = beschleunigung_zout / 16384.0
 
-            print('beschleunigung_xout: ', ('%6d' % beschleunigung_xout), ' skaliert: ', beschleunigung_xout_skaliert)
-            print('beschleunigung_yout: ', ('%6d' % beschleunigung_yout), ' skaliert: ', beschleunigung_yout_skaliert)
-            print('beschleunigung_zout: ', ('%6d' % beschleunigung_zout), ' skaliert: ', beschleunigung_zout_skaliert)
+        print('beschleunigung_xout: ', ('%6d' % beschleunigung_xout), ' skaliert: ', beschleunigung_xout_skaliert)
+        print('beschleunigung_yout: ', ('%6d' % beschleunigung_yout), ' skaliert: ', beschleunigung_yout_skaliert)
+        print('beschleunigung_zout: ', ('%6d' % beschleunigung_zout), ' skaliert: ', beschleunigung_zout_skaliert)
+        
+        self._beschleunigung_xout = beschleunigung_xout
+        self._beschleunigung_yout = beschleunigung_yout
+        self._beschleunigung_zout = beschleunigung_zout
 
-            self._beschleunigung_xout = beschleunigung_xout
-            self._beschleunigung_yout = beschleunigung_yout
-            self._beschleunigung_zout = beschleunigung_zout
+        x_rotation = self._get_x_rotation(beschleunigung_xout_skaliert, beschleunigung_yout_skaliert, beschleunigung_zout_skaliert)
+        y_rotation = self._get_y_rotation(beschleunigung_xout_skaliert, beschleunigung_yout_skaliert, beschleunigung_zout_skaliert)
+        
+        print('X Rotation: ' , x_rotation)
+        print('Y Rotation: ' , y_rotation)
+        print('-----------------------------------')
 
-            x_rotation = self._get_x_rotation(beschleunigung_xout_skaliert, beschleunigung_yout_skaliert, beschleunigung_zout_skaliert)
-            y_rotation = self._get_y_rotation(beschleunigung_xout_skaliert, beschleunigung_yout_skaliert, beschleunigung_zout_skaliert)
-
-            print('X Rotation: ' , x_rotation)
-            print('Y Rotation: ' , y_rotation)
-            print('-----------------------------------')
-
-            self._x_rotation = x_rotation
-            self._y_rotation = y_rotation
-
-            time.sleep(1)
+        self._x_rotation = x_rotation
+        self._y_rotation = y_rotation
 
     def _skaliert(self, value, scale):
         return value / scale
@@ -281,6 +272,33 @@ class EmergencyButton(Thread):
             self._service.cancel = True
 
         time.sleep(1)
+        
+
+class SensorService(Thread):
+    def __init__(self, *sensors):
+        Thread.__init__(self)
+
+        if not all(isinstance(s, ISensor) for s in sensors):
+            raise TypeError('Not all objects are of type ISensor.')
+
+        self._sensors = sensors
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def run(self):
+        while True:
+            for sensor in self._sensors:
+                sensor.read_data()
+
+            time.sleep(1)
+
+    def get(self, sensor_name):
+        for sensor in self._sensors:
+            if sensor_name == type(sensor).__name__:
+                return sensor
+
+        return None
 
 
 def destroy_sensors():
