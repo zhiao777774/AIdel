@@ -12,13 +12,14 @@ from hcsr04sensor import sensor as hcsr04
 import utils
 
 
+GPIO.setmode(GPIO.BCM)
+
 class ISensor:
     @abc.abstractmethod
     def read_data(self):
         return NotImplemented
 
 
-GPIO.setmode(GPIO.BCM)
 # 超音波模組
 class HCSR04(ISensor):
     def __init__(self, trigger_pin, echo_pin):
@@ -131,8 +132,7 @@ class MPU6050(ISensor):
             beschleunigung_xout = self._read_word_2c(0x3b)
             beschleunigung_yout = self._read_word_2c(0x3d)
             beschleunigung_zout = self._read_word_2c(0x3f)
-        except OSError:
-            return
+        except OSError: return
 
         print('Gyroskop')
         print('--------')
@@ -293,12 +293,12 @@ class SensorService(Thread):
 
             time.sleep(1)
 
-    def get(self, sensor_name):
+    def get(self, sensor_name, default = None):
         for sensor in self._sensors:
             if sensor_name == type(sensor).__name__:
                 return sensor
 
-        return None
+        return default
 
 
 def destroy_sensors():
