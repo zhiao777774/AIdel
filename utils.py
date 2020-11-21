@@ -2,6 +2,7 @@ import time
 import logging
 from threading import Thread
 from dataclasses import dataclass
+from queue import PriorityQueue
 
 
 logging.basicConfig(
@@ -62,6 +63,10 @@ class AsyncTimer(Thread, Timer):
         Timer.start(self)
 
 
+def get_type_name(instance):
+    return type(instance).__name__
+
+
 @dataclass
 class LatLng:
     latitude: float = 0.0
@@ -83,3 +88,9 @@ def initialize_vars():
 
     global GLOBAL_LATLNG
     GLOBAL_LATLNG = LatLng()
+
+    global AUDIO_PLAYING
+    AUDIO_PLAYING = False
+
+    global AUDIO_QUEUE
+    AUDIO_QUEUE = PriorityQueue()
