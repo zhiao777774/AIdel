@@ -16,7 +16,8 @@ from .obstacle_dodge_service import Dodger, Maze, generate_maze, PathNotFoundErr
 from .distance_measurementor import Calibrationor, Measurementor
 from .environmental_model import create_environmental_model, disconnect_environmental_model_socket
 from .guardianship_service import GuardianshipService
-from .sensor_module import HCSR04, GPS, MPU6050, Buzzer, Frequency, EmergencyButton, destroy_sensors
+from .sensor_module import SensorService, HCSR04, GPS, MPU6050
+from .sensor_module import Buzzer, Frequency, EmergencyButton, destroy_sensors
 # from .beacon_scanner import BeaconScanner
 # from .chatbot.chatbot_client import ChatbotClient
 
@@ -128,7 +129,7 @@ def _init_services():
         service.setDaemon(True)
         service.start()
 
-        service_name = type(service).__name__
+        service_name = utils.get_type_name(service)
         _DICT_SERVICE[service_name] = service
         utils.GLOBAL_LOGGER.info(f'{service_name} is started.')
 
@@ -137,21 +138,25 @@ def _enable_sensors():
     sensors = [
         HCSR04(trigger_pin=23, echo_pin=24),
         # GPS(port='/dev/ttyAMA0'),
-        MPU6050(),
-        # EmergencyButton(button_pin=26, 
-        #   service=_DICT_SERVICE['GuardianshipService'])
+        MPU6050()
     ]
 
+    service = SensorService(*sensors)
     for sensor in sensors:
-        sensor.setDaemon(True)
-        sensor.start()
-
-        sensor_name = type(sensor).__name__
+        sensor_name = utils.get_type_name(sensor)
         _DICT_SENSORS[sensor_name] = sensor
         utils.GLOBAL_LOGGER.info(f'{sensor_name} is enabled.')
+    
+    service.setDaemon(True)
+    service.start()
 
     _DICT_SENSORS['Buzzer'] = Buzzer(buzzer_pin=16)
-    utils.GLOBAL_LOGGER.info(f'{type(_DICT_SENSORS["Buzzer"]).__name__} is enabled.')
+    utils.GLOBAL_LOGGER.info(f'{utils.get_type_name(_DICT_SENSORS["Buzzer"])} is enabled.')
+
+    # _DICT_SENSORS['EmergencyButton'] = EmergencyButton(
+    #                                         button_pin = 26, 
+    #                                         service = _DICT_SERVICE['GuardianshipService'])
+    # utils.GLOBAL_LOGGER.info(f'{utils.get_type_name(_DICT_SENSORS["EmergencyButton"])} is enabled.')
 
 def _generate_bboxes(dets):
     return [BoundingBox(det) for det in dets]
@@ -231,8 +236,8 @@ def _signal_handle():
     def _handler(signal, frame):
         cv2.destroyAllWindows()
         destroy_sensors()
-        # _DICT_SERVICE['GuardianshipService'].stop()
         disconnect_environmental_model_socket()
+        # _DICT_SERVICE['GuardianshipService'].stop()
         # _CHATBOT_CLIENT.close()
         shutil.rmtree(f'{AUDIO_PATH}/temp', ignore_errors = True)
         sys.exit(0)
