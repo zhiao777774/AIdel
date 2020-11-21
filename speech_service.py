@@ -89,7 +89,10 @@ class SpeechService(Thread):
                     utils.GLOBAL_LOGGER.info(f'{mode}功能未開啟')
                     self.response(f'{mode}功能未開啟.wav')
                 continue
-            elif sentence == '這個是什麼':
+            elif sentence in ('這是什麼', '這個是什麼'):
+                print('正在辨識中')
+                self.response(f'正在辨識中.wav')
+                
                 results = []
                 # results = text_recognize(utils.GLOBAL_IMAGE)
                 # results = [map(lambda s: _replace_and_trim(s, ' '), results)]
@@ -416,13 +419,31 @@ class Responser:
         return res[keyword]
 
     def play_audio(self, audio_name, callback = None):
+        if utils.AUDIO_PLAYING: 
+            priority = int(audio_name not in self._response.values())
+            utils.AUDIO_QUEUE.put((priority, audio_name, callback))
+            return
+
+        utils.AUDIO_PLAYING = True
+
         pygame.mixer.init()
         pygame.mixer.music.load(f'{fc.ROOT_PATH}/data/audio/{audio_name}')
-        pygame.mixer.music.play()
+        
+        try:
+            pygame.mixer.music.play()
+        except:
+            utils.AUDIO_PLAYING = False
+            self.play_audio(audio_name, callback)
+
         while pygame.mixer.music.get_busy(): continue
 
         pygame.mixer.quit()
         if callable(callback): callback()
+
+        utils.AUDIO_PLAYING = False
+        if not utils.AUDIO_QUEUE.empty():
+            _, audio_name, callback = utils.AUDIO_QUEUE.get()
+            self.play_audio(audio_name, callback)
 
     def tts(self, input_text, audio_name = ''):
         subscription_key = '037a6e1532d6499dbdbfb09c1d4276bb'
@@ -546,6 +567,7 @@ class Searcher(AbstractService, Thread):
         utils.GLOBAL_LOGGER.info('Searcher is started.')
 
     def execute(self, service, keyword):
+        # keyword = google_translate(keyword, target = 'en')
         self._keyword = keyword
         return self
 
@@ -558,9 +580,11 @@ class Searcher(AbstractService, Thread):
             objs = utils.GLOBAL_DATASET
             if objs:
                 filtered = [o for o in objs if o.clsName != 'unknown']
+                # k = [o for o in filtered if o.clsName == self._keyword]
                 k = [o for o in filtered if google_translate(o.clsName) == self._keyword]
 
                 if not k:
+                    # translated = [map(lambda o: o.clsName, filtered)]
                     translated = [map(lambda o: google_translate(o.clsName), filtered)]
 
                     for i, phrase in enumerate(translated):
