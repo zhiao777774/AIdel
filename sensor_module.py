@@ -295,7 +295,7 @@ class SensorService(Thread):
 
     def get(self, sensor_name, default = None):
         for sensor in self._sensors:
-            if sensor_name == type(sensor).__name__:
+            if sensor_name == utils.get_type_name(sensor):
                 return sensor
 
         return default
