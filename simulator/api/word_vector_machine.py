@@ -1,11 +1,11 @@
-import pathlib
-from gensim.models import word2vec
+from pathlib import PurePath
 from gensim import models
 
 
-_ROOT_PATH = str(pathlib.PurePath(__file__).parent)
+_ROOT_PATH = str(PurePath(__file__).parent.parent)
 _MODEL_PATH = f'{_ROOT_PATH}/data/word2vec.model'
 _MODEL = models.Word2Vec.load(_MODEL_PATH)
+print('Loading word2vec model successfully!')
 
 def find_synonyms(query, n = 100):
     synonyms = []
