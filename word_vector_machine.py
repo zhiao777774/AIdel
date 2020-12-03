@@ -1,4 +1,3 @@
-from gensim.models import word2vec
 from gensim import models
 
 import file_controller as fc
