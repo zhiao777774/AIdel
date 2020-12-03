@@ -20,7 +20,7 @@ def compare_synonym(query):
     return _MODEL.similarity(query[0], query[1])
 
 def compare_similarity(query, n = 100):
-    return _MODEL.most_similar([q_list[0], q_list[1]], [q_list[2]], topn = n)
+    return _MODEL.most_similar([query[0], query[1]], [query[2]], topn = n)
 
 
 if __name__ == '__main__':
