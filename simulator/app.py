@@ -7,6 +7,8 @@ from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
+import api.word_vector_machine as wvm
+import api.translator as translator
 from api.dodger import Maze, Dodger, PathNotFoundError
 
 
@@ -17,6 +19,9 @@ socketio = SocketIO(app)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
+
+
+_ROOT_PATH = str(pathlib.PurePath(__file__).parent)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -101,6 +106,35 @@ def latlng_query_addr():
     })
 
 
+@app.route('/findSynonyms', methods=['POST'])
+def find_synonyms():
+    req_data = request.get_json()
+    req_data.setdefault('n', 100)
+
+    return wvm.find_synonyms(req_data['query'], int(req_data['n']))
+
+
+@app.route('/compareSynonym', methods=['POST'])
+def compare_synonym():
+    return wvm.compare_synonym(request.get_json()['query'])
+
+
+@app.route('/compareSimilarity', methods=['POST'])
+def compare_similarity():
+    req_data = request.get_json()
+    req_data.setdefault('n', 100)
+
+    return wvm.compare_similarity(req_data['query'], int(req_data['n']))
+
+
+@app.route('/translate', methods=['POST'])
+def google_translate():
+    req_data = request.get_json()
+    req_data.setdefault('target', 'zh-TW')
+
+    return translator.google_translate(req_data['phrase'], req_data['target'])
+
+
 @app.route('/modelFileUpload', methods=['GET', 'POST'])
 def model_file_upload():
     if request.method == 'POST':
@@ -151,8 +185,7 @@ def receive_environmental_model(model):
 def write_environmental_model(data):
     print('write Environmental model.')
 
-    root_path = str(pathlib.PurePath(__file__).parent)
-    path = root_path + '/data/environmentalModel.txt'
+    path = _ROOT_PATH + '/data/environmentalModel.txt'
     # pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     with open(path, 'w') as f:
