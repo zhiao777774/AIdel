@@ -69,7 +69,15 @@ class SpeechService(Thread):
             print('Recording...')
             sentence = self.voice2text()
             utils.GLOBAL_SPEECH_CONTENT = sentence
+            '''
+            keywords = [k for k in self._triggerable_keywords if k in sentence]
+            triggerable = len(keywords) > 0
+            if not triggerable:
+                continue
 
+            for k in keywords:
+                sentence = _replace_and_trim(sentence, k)
+            '''
             if sentence == '無法翻譯': continue
             elif sentence in ('取消導航', '停止導航', '取消尋找', '停止尋找'):
                 mode = sentence[2:]
@@ -105,15 +113,7 @@ class SpeechService(Thread):
                 utils.GLOBAL_LOGGER.info(response)
                 async_play_audio(response, responser = Responser(load = False))
                 continue
-            '''
-            keywords = [k for k in self._triggerable_keywords if k in sentence]
-            triggerable = len(keywords) > 0
-            if not triggerable:
-                continue
 
-            for k in keywords:
-                sentence = _replace_and_trim(sentence, k)
-            '''
             service = [k for k in ServiceType if k.value in sentence]
             words = self.sentence_segment(sentence)
             keywords = self.extract_keywords(words)
@@ -422,6 +422,7 @@ class Responser:
         if utils.AUDIO_PLAYING: 
             priority = int(audio_name not in self._response.values())
             utils.AUDIO_QUEUE.put((priority, audio_name, callback))
+            utils.GLOBAL_LOGGER.info(f'「{audio_name}」已加入至播放佇列中')
             return
 
         utils.AUDIO_PLAYING = True
@@ -443,6 +444,8 @@ class Responser:
         utils.AUDIO_PLAYING = False
         if not utils.AUDIO_QUEUE.empty():
             _, audio_name, callback = utils.AUDIO_QUEUE.get()
+            utils.GLOBAL_LOGGER.info(f'已從播放佇列取出「{audio_name}」')
+
             self.play_audio(audio_name, callback)
 
     def tts(self, input_text, audio_name = ''):

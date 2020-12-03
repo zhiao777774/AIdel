@@ -68,13 +68,11 @@ def digit_recognize(frame):
 	thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
 	
 	digits = []
-	# loop over each of the digits
 	for i, c in enumerate(cnts):
 		# extract the digit ROI
 		(x, y, w, h) = cv2.boundingRect(c)
 		roi = thresh[y:y + h, x:x + w]
-		kernel = np.ones((3, 3), np.uint8)
-		roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, kernel)
+		roi = cv2.morphologyEx(roi, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
 		roi = cv2.dilate(roi, np.ones((3, 3), np.uint8), iterations = 1)
 		
 		# compute the width and height of each of the 7 segments
@@ -94,7 +92,6 @@ def digit_recognize(frame):
     	]
 		on = [0] * len(segments)
 		
-		# loop over the segments
 		for (i, ((xA, yA), (xB, yB))) in enumerate(segments):
     		# extract the segment ROI, count the total number of
     		# thresholded pixels in the segment, and then compute
