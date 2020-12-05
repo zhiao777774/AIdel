@@ -1,12 +1,12 @@
-import googletrans
 import translate as pytrans
+from google_trans_new import google_translator 
 
 
 def google_translate(phrase, target = 'zh-TW'):
-    translator = googletrans.Translator()
-    translation = translator.translate(phrase, dest = target)
+    translator = google_translator()
+    translation = translator.translate(phrase, lang_tgt = target)
 
-    return translation.text
+    return translation
 
 def translate(phrase, source, target):
     translator = pytrans.Translator(from_lang = source, to_lang = target)
