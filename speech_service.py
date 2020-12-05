@@ -570,8 +570,8 @@ class Searcher(AbstractService, Thread):
         utils.GLOBAL_LOGGER.info('Searcher is started.')
 
     def execute(self, service, keyword):
-        # keyword = translate(keyword, source = 'zh-TW', target = 'EN')
-        self._keyword = keyword
+        keyword = translate(keyword, source = 'zh-TW', target = 'EN')
+        self._keyword = keyword.lower()
         return self
 
     def run(self):
@@ -583,14 +583,14 @@ class Searcher(AbstractService, Thread):
             objs = utils.GLOBAL_DATASET
             if objs:
                 filtered = [o for o in objs if o.clsName != 'unknown']
-                # k = [o for o in filtered if o.clsName == self._keyword]
-                k = [o for o in filtered if
-                        translate(o.clsName, source = 'EN', target = 'zh-TW') == self._keyword]
+                k = [o for o in filtered if o.clsName.lower() == self._keyword]
+                # k = [o for o in filtered if
+                #         translate(o.clsName, source = 'EN', target = 'zh-TW') == self._keyword]
 
                 if not k:
-                    # translated = [map(lambda o: o.clsName, filtered)]
-                    translated = [map(lambda o: translate(
-                            o.clsName, source = 'EN', target = 'zh-TW'), filtered)]
+                    translated = [map(lambda o: o.clsName.lower(), filtered)]
+                    # translated = [map(lambda o: translate(
+                    #         o.clsName, source = 'EN', target = 'zh-TW'), filtered)]
 
                     for i, phrase in enumerate(translated):
                         synonyms = list(map(lambda s: s[0], find_synonyms(phrase)))
