@@ -35,5 +35,6 @@ def translate(phrase, source, target):
 
 if __name__ == '__main__':
     # translated = google_translate('cup')
-    translated = translate('cup', 'EN', 'zh-TW')
+    # translated = translate('cup', 'EN', 'zh-TW')
+    translated = translate('杯子', 'zh-TW', 'EN')
     print(translated)
