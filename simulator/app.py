@@ -111,12 +111,12 @@ def find_synonyms():
     req_data = request.get_json()
     req_data.setdefault('n', 100)
 
-    return wvm.find_synonyms(req_data['query'], int(req_data['n']))
+    return json.dumps(wvm.find_synonyms(req_data['query'], int(req_data['n'])))
 
 
 @app.route('/compareSynonym', methods=['POST'])
 def compare_synonym():
-    return wvm.compare_synonym(request.get_json()['query'])
+    return str(wvm.compare_synonym(request.get_json()))
 
 
 @app.route('/compareSimilarity', methods=['POST'])
@@ -124,15 +124,22 @@ def compare_similarity():
     req_data = request.get_json()
     req_data.setdefault('n', 100)
 
-    return wvm.compare_similarity(req_data['query'], int(req_data['n']))
+    return json.dumps(wvm.compare_similarity(req_data['query'], int(req_data['n'])))
 
 
-@app.route('/translate', methods=['POST'])
+@app.route('/googleTranslate', methods=['POST'])
 def google_translate():
     req_data = request.get_json()
     req_data.setdefault('target', 'zh-TW')
 
     return translator.google_translate(req_data['phrase'], req_data['target'])
+
+
+@app.route('/pyTranslate', methods=['POST'])
+def py_translate():
+    req_data = request.get_json()
+    return translator.translate(req_data['phrase'], 
+                    req_data['source'], req_data['target'])
 
 
 @app.route('/modelFileUpload', methods=['GET', 'POST'])
