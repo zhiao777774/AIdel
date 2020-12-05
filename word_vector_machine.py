@@ -1,25 +1,47 @@
-from gensim import models
+import requests
 
 import file_controller as fc
 
 
-MODEL_PATH = f'{fc.ROOT_PATH}/data/word2vec.model'
-_MODEL = models.Word2Vec.load(MODEL_PATH)
+_API_URL = 'http://120.125.83.10:8090'
 
 def find_synonyms(query, n = 100):
-    synonyms = []
+    service_url = f'{_API_URL}/findSynonyms'
+    post_data = {
+        'query': query,
+        'n': n
+    }
 
-    res = _MODEL.most_similar(query, topn = n)
-    for word, confidence in res:
-        synonyms.append((word, confidence))
+    response = requests.post(service_url, json = post_data)
+    synonyms = None
+    if response.status_code == 200:
+        synonyms = response.json()
 
     return synonyms
 
 def compare_synonym(query):
-    return _MODEL.similarity(query[0], query[1])
+    service_url = f'{_API_URL}/compareSynonym'
+
+    response = requests.post(service_url, json = query)
+    prob = None
+    if response.status_code == 200:
+        prob = response.text
+
+    return prob
 
 def compare_similarity(query, n = 100):
-    return _MODEL.most_similar([query[0], query[1]], [query[2]], topn = n)
+    service_url = f'{_API_URL}/compareSimilarity'
+    post_data = {
+        'query': query,
+        'n': n
+    }
+
+    response = requests.post(service_url, json = post_data)
+    synonyms = None
+    if response.status_code == 200:
+        synonyms = response.json()
+
+    return synonyms
 
 
 if __name__ == '__main__':

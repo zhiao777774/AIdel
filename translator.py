@@ -1,13 +1,39 @@
-import googletrans
-import translate as pytrans
+import requests
 
+
+_API_URL = 'http://120.125.83.10:8090'
 
 def google_translate(phrase, target = 'zh-TW'):
-    translator = googletrans.Translator()
-    translation = translator.translate(phrase, dest = target)
+    service_url = f'{_API_URL}/googleTranslate'
+    post_data = {
+        'phrase': phrase,
+        'target': target
+    }
 
-    return translation.text
+    response = requests.post(service_url, json = post_data)
+    translated = None
+    if response.status_code == 200:
+        translated = response.text
+
+    return translated
 
 def translate(phrase, source, target):
-    translator = pytrans.Translator(from_lang = source, to_lang = target)
-    return translator.translate(phrase)
+    service_url = f'{_API_URL}/pyTranslate'
+    post_data = {
+        'phrase': phrase,
+        'source': source,
+        'target': target
+    }
+
+    response = requests.post(service_url, json = post_data)
+    translated = None
+    if response.status_code == 200:
+        translated = response.text
+
+    return translated
+
+
+if __name__ == '__main__':
+    # translated = google_translate('cup')
+    translated = translate('cup', 'EN', 'zh-TW')
+    print(translated)
